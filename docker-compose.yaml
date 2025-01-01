@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # MySQL Database Service
+  mysql:
+    image: mysql:8.0  # Use the latest stable MySQL image
+    container_name: mysql_container
+    restart: always
+    ports:
+      - "3306:3306"  # Expose MySQL on port 3306
+    environment:
+      MYSQL_ROOT_PASSWORD: password  # Replace with a strong password
+      MYSQL_DATABASE: attendance_db      # Database name
+      MYSQL_USER: user                   # Custom user
+      MYSQL_PASSWORD: password       # Password for the custom user
+    volumes:
+      - mysql_data:/var/lib/mysql  # Persist MySQL data
+
+  # Spring Boot Application Service
+  app:
+    image: your_springboot_app_image  # Replace with your Spring Boot app image
+    container_name: springboot_app
+    depends_on:
+      - mysql
+    ports:
+      - "8080:8080"  # Expose the app on port 8080
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/attendance_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: userpassword
+      JWT_SECRET_KEY: your_secret_key   # Environment variable for JWT
+    networks:
+      - app_network
+
+# Define Volumes
+volumes:
+  mysql_data:
+
+# Define Network
+networks:
+  app_network:
+    driver: bridge
+
