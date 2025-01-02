@@ -50,7 +50,7 @@ The backend of **FaceDec** is powered by **Spring Boot**, ensuring robust, scala
     - Clone the repository
    
       ```bash
-         git clone https://github.com/yourusername/facedec.git
+         git clone https://github.com/TheTimeMachine01/facedec.git
       ```
 
    - Clone the repository
