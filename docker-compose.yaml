@@ -16,22 +16,6 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql  # Persist MySQL data
 
-  # Spring Boot Application Service
-  app:
-    image: your_springboot_app_image  # Replace with your Spring Boot app image
-    container_name: springboot_app
-    depends_on:
-      - mysql
-    ports:
-      - "8080:8080"  # Expose the app on port 8080
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/attendance_db
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: userpassword
-      JWT_SECRET_KEY: your_secret_key   # Environment variable for JWT
-    networks:
-      - app_network
-
 # Define Volumes
 volumes:
   mysql_data:
