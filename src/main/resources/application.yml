@@ -4,6 +4,10 @@ server:
 
 # Spring Datasource Configuration
 spring:
+  main:
+    allow-circular-references: true
+    allow-bean-definition-overriding: true
+
   datasource:
     url: jdbc:mysql://localhost:3306/attendance_db  # Replace with your database URL
     username: user                                  # Replace with your database username
@@ -32,4 +36,5 @@ logging:
   level:
     root: INFO
     org.springframework: DEBUG
+
 

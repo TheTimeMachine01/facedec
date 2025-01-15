@@ -22,7 +22,13 @@ public class Token {
     @Enumerated(EnumType.STRING)
     private TokenStatus status;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    // Automatically set createdAt before persisting
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }
 

@@ -15,7 +15,7 @@ import java.util.function.Function;
 @Service
 public class JWTService {
 
-    private final String SECRET_KEY = "your_secret_key"; // Use environment variables in production
+    private final String SECRET_KEY = "${jwt.secret-key}"; // Use environment variables in production
 
     // 1. Generate Token
     public String generateToken(UserDetails userDetails) {
