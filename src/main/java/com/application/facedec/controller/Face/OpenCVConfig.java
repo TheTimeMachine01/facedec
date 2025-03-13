@@ -1,4 +1,4 @@
-package com.application.facedec.config;
+package com.application.facedec.controller.Face;
 
 public class OpenCVConfig {
     static {

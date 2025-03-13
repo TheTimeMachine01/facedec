@@ -5,7 +5,6 @@ services:
   mysql:
     image: mysql:8.0  # Use the latest stable MySQL image
     container_name: mysql_container
-    restart: always
     ports:
       - "3306:3306"  # Expose MySQL on port 3306
     environment:

@@ -3,10 +3,10 @@
 **FaceDec** is an advanced Face Detection Attendance System designed to revolutionize how attendance is recorded in educational institutions, workplaces, and events. This mobile application leverages cutting-edge technologies to provide a seamless and efficient experience for users.
 ## 📱 Mobile Application
 
-The **FaceDec** mobile application is built using **React Native**, offering cross-platform compatibility and a smooth user interface. Users can easily check in or out of events, classes, or workplaces with real-time facial recognition.
+The **FaceDec** mobile application is built using **React Native**, offering cross-platform compatibility and a smooth employee interface. Users can easily check in or out of events, classes, or workplaces with real-time facial recognition.
 ## ⚙️ Backend 
 
-The backend of **FaceDec** is powered by **Spring Boot**, ensuring robust, scalable, and secure services for handling face recognition data, attendance logs, and user management.
+The backend of **FaceDec** is powered by **Spring Boot**, ensuring robust, scalable, and secure services for handling face recognition data, attendance logs, and employee management.
 ## ✨ Features 
 
 - 🔍 **Real-Time Face Detection**: Accurate and quick face recognition using advanced algorithms.
@@ -20,7 +20,7 @@ The backend of **FaceDec** is powered by **Spring Boot**, ensuring robust, scala
    Expand the platform with a responsive desktop website, allowing administrators and managers to:
    - View and analyze attendance data.
    - Export reports for detailed insights.
-   - Manage user profiles and system settings.
+   - Manage employee profiles and system settings.
 
 - **Integration with External Systems**:  
    Extend the system to integrate with HR software, educational management systems, and payroll services.

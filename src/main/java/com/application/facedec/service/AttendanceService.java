@@ -2,7 +2,7 @@ package com.application.facedec.service;
 
 
 import com.application.facedec.entity.Attendance;
-import com.application.facedec.entity.User;
+import com.application.facedec.entity.Employee;
 import com.application.facedec.repository.AttendanceRepository;
 import com.application.facedec.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +23,9 @@ public class AttendanceService {
     }
 
     public Attendance addAttendance(Long userId, Attendance attendance) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        attendance.setUser(user);
+        Employee employee = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+        attendance.setUser(employee);
         return attendanceRepository.save(attendance);
     }
 }

@@ -1,11 +1,17 @@
 package com.application.facedec.config;
 
 import com.application.facedec.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -21,38 +27,31 @@ import java.util.stream.Collectors;
 @EnableMethodSecurity // Enables method-level security (e.g., @PreAuthorize)
 public class SecurityConfig{
 
-//    private final AuthenticationService authenticationService;
-    private final JWTAuthenticationFilter jwtAuthenticationFilter;
+    @Autowired
+    private UserDetailsService userDetailsService;
 
-    public SecurityConfig(JWTAuthenticationFilter jwtAuthenticationFilter) {
-//        this.authenticationService = authenticationService;
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
+    @Autowired
+    private JWTAuthenticationFilter authenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for stateless JWT auth
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Allow authentication endpoints
-                        .requestMatchers("/error").permitAll()
-                        .anyRequest().authenticated() // Protect all other endpoints
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // Add JWT filter
+                .authorizeHttpRequests((auth) -> {
+                    auth.requestMatchers("/api/auth/**").permitAll(); // Allow authentication endpoints
+                    auth.requestMatchers("/error").permitAll();
+                    auth.anyRequest().authenticated(); // Protect all other endpoints
+                }).httpBasic(Customizer.withDefaults())
+                .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
+        return http.build(); // Add JWT filter
+
     }
 
     @Bean
-    public UserDetailsService userDetailsService(UserRepository userRepository) {
-        return username -> userRepository.findByEmail(username)
-                .map(user -> new User(
-                        user.getEmail(),
-                        user.getPassword(),
-                        user.getRoles().stream()
-                                .map(role -> new SimpleGrantedAuthority(role.getRoleName().name()))
-                                .collect(Collectors.toList())))
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    public AuthenticationManager authenticationManagerBean(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 
     @Bean

@@ -14,7 +14,7 @@ public class Token {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Employee user;
 
     @Column(unique = true, nullable = false)
     private String token;

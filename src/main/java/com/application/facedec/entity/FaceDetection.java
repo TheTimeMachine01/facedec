@@ -15,7 +15,7 @@ public class FaceDetection {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Employee user;
 
     private String faceImageUrl;
     private String imageSize;

@@ -21,7 +21,7 @@ public class Attendance {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Employee user;
 
     @Enumerated(EnumType.STRING)
     private DayOfWeek day; // Enum for Monday, Tuesday, etc.

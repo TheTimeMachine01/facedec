@@ -2,31 +2,33 @@ package com.application.facedec.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
 
 import java.util.Objects;
 
 @Entity
 @Data
+@Table(name = "roles")
 public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String name;
 
-    @Enumerated(EnumType.STRING)
-    private RoleName roleName;
+    @Getter
+    public enum RoleType {
+        USER("USER"),
+        ADMIN("ADMIN"),
+        DEV("DEV");
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Role role = (Role) o;
-        return Objects.equals(id, role.id) && Objects.equals(roleName, role.roleName);
+        private final String name;
+
+        RoleType(String name) {
+            this.name = name;
+        }
+
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, roleName);
-    }
 
 }
