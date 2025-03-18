@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-public class FaceDetection {
+public class Face {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -16,6 +16,13 @@ public class FaceDetection {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private Employee user;
+
+    private Long emp_id;
+
+//    private float[] faceEmbedding;
+
+    @Version
+    private Long version;
 
     private String faceImageUrl;
     private String imageSize;

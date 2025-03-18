@@ -18,6 +18,11 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
+    public ResponseEntity<Object> handleError(String message, HttpStatus status) {
+        ErrorResponse handleErrorResp = new ErrorResponse(message);
+        return new ResponseEntity<>(handleErrorResp, status);
+    }
+
     @Setter
     @Getter
     static class ErrorResponse {

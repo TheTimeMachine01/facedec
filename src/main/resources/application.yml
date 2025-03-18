@@ -9,7 +9,7 @@ spring:
     allow-bean-definition-overriding: true
 
   datasource:
-    url: jdbc:mysql://localhost:3306/attendance_db  # Replace with your database URL
+    url: jdbc:mysql://localhost:3306/attendance_db?connectionAttributes=transactionIsolation=REPEATABLE-READ  # Replace with your database URL
     username: user                                  # Replace with your database username
     password: password                              # Replace with your database password
     driver-class-name: com.mysql.cj.jdbc.Driver     # MySQL driver
@@ -28,4 +28,4 @@ spring:
 # JWT Configuration
 jwt:
   secret: 62862ccc0e22c76d796e3b8424c50112e57be65ee34440339046b951e46ed58d6fe8e62ad20a3169c3e2b31e7603fc1da0f73753b9b301a1fa998ca4dd0cbc526ad784310adaf2821e08253f74facc77c84c56430591d0818a656a39e0266f67ac8ed9d7625d17fd19fef68b89ad36cd11a3fe9190f2f75171ab6ea118a9c9b4c098d320c0077a5d997714d960b6b829151ea2cab7938c600a47afabcfb8faf7f6fcc427bf7fcda43e1f40caefbfd90e8fae12a2553667c1ad8e22d14e5f1a2efca7d12c6ddd024f1ad4712852a52139a702f898b7c8982bc526d46426908493887b70fe1ec315c8f9a6d4629478230acc60328455c363e064865bd6989cedf8                       # Use environment variable in production
-  expiration-time: 60000                         # Token validity in milliseconds (1 Minute)
+  expiration-time: 6000000                         # Token validity in milliseconds (100 Minute)
