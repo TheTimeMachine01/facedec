@@ -12,7 +12,7 @@ spring:
 #    url: jdbc:mysql://localhost:4306/attendance_db?connectionAttributes=transactionIsolation=REPEATABLE-READ  # Replace with your database URL
     url:  jdbc:mysql://avien-mysql-ashish-6abe.l.aivencloud.com:26622/facedec?useSSL=true&requireSSL=true&sslMode=VERIFY_IDENTITY&trustCertificateKeyStoreUrl=classpath:truststore.jks&trustCertificateKeyStorePassword=ashish
     username: avnadmin                                  # Replace with your database username
-    password: AVNS_dPT5G26hyxwSZO5IZcv                              # Replace with your database password
+    password: ${DB_PASS}                              # Replace with your database password
     driver-class-name: com.mysql.cj.jdbc.Driver     # MySQL driver
 
   jpa:
