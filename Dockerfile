@@ -3,7 +3,7 @@ WORKDIR /app
 COPY . .
 RUN mvn clean package -DskipTests
 
-FROM ubuntu:22.04
+FROM ubuntu:22.04 AS opencv_builder
 
 ENV OPENCV_VERSION=4.9.0
 ENV INSTALL_DIR=/usr/local
@@ -88,7 +88,7 @@ ENV JAVA_OPTS="-Djava.library.path=${INSTALL_DIR}/share/java/opencv4"
 
 ENV LD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/share/java/opencv4:$LD_LIBRARY_PATH
 
-COPY --from=stage2 ${INSTALL_DIR}/share/java/opencv4/opencv-${OPENCV_VERSION}.jar /app/
+COPY --from=opencv_builder ${INSTALL_DIR}/share/java/opencv4/opencv-${OPENCV_VERSION}.jar /app/
 COPY --from=build /app/target/*.jar /app/facedec.jar
 
 ENV PORT=8080
