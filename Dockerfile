@@ -8,15 +8,29 @@ FROM ubuntu:22.04 AS opencv_builder
 ENV OPENCV_VERSION=4.9.0
 ENV INSTALL_DIR=/usr/local
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update
+
+# DEBUGGING STEP 2: Install core build essentials first
+# If this fails, the issue is fundamental.
+RUN apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
     git \
     openjdk-21-jdk \
-    libgtk-3-dev \
+    unzip \
+    # Temporarily remove other libraries to narrow down the problem
+    && echo "Core dependencies installed successfully."
+
+# DEBUGGING STEP 3: Install OpenCV libraries in smaller batches
+# This helps identify which specific library is causing the problem.
+# Add more RUN lines as needed to isolate.
+RUN apt-get install -y --no-install-recommends \
     libjpeg-dev \
     libpng-dev \
     libtiff-dev \
+    && echo "Image format libraries installed successfully."
+
+RUN apt-get install -y --no-install-recommends \
     libavcodec-dev \
     libavformat-dev \
     libswscale-dev \
@@ -25,6 +39,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libx264-dev \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
+    && echo "Video libraries installed successfully."
+
+RUN apt-get install -y --no-install-recommends \
+    libgtk-3-dev \
     libgl1-mesa-dev \
     libglu1-mesa-dev \
     libtbb-dev \
@@ -33,8 +51,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gfortran \
     python3-dev \
     python3-numpy \
-    unzip \
-    && rm -rf /var/lib/apt/lists/* \
+    && echo "Other core dependencies installed successfully."
 
 ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 ENV PATH=$JAVA_HOME/bin:$PATH
