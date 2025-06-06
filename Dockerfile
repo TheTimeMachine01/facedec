@@ -46,6 +46,7 @@ RUN apt-get install -y --no-install-recommends \
     libgl1-mesa-dev \
     libglu1-mesa-dev \
     libtbb-dev \
+    libdc1394-dev \
     libatlas-base-dev \
     gfortran \
     python3-dev \
