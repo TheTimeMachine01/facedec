@@ -57,9 +57,9 @@ RUN cmake \
     -D BUILD_PERF_TESTS=OFF \
     -D BUILD_opencv_python2=OFF \
     -D BUILD_opencv_python3=OFF \
-    -D WITH_GTK_2_X=OFF \ # Ensure GTK3 is preferred if installed
-    -D WITH_FFMPEG=ON \ # Enable FFMPEG for video support
-    -D WITH_V4L=ON \ # Enable Video4Linux for camera support
+    -D WITH_GTK_2_X=OFF \
+    -D WITH_FFMPEG=ON \
+    -D WITH_V4L=ON \
     ../
 
 RUN make -j$(nproc)
