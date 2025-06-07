@@ -70,7 +70,7 @@ RUN cmake \
     -D CMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
     -D BUILD_JAVA=ON \
     -D BUILD_FAT_JAVA_LIB=ON \
-    -D BUILD_SHARED_LIBS=ON \
+    -D BUILD_SHARED_LIBS=OFF \
     -D OPENCV_EXTRA_MODULES_PATH=/opt/opencv_build/opencv_contrib/modules \
     -D BUILD_EXAMPLES=OFF \
     -D BUILD_TESTS=OFF \
@@ -89,7 +89,6 @@ RUN make install
 RUN ls -la ${INSTALL_DIR}/share/java/opencv4/
 RUN ls -la ${INSTALL_DIR}/lib/
 RUN ls -la ${INSTALL_DIR}/share/java/opencv4/${ACTUAL_OPENCV_JAR_NAME}
-RUN ls -lh ${INSTALL_DIR}/lib/libopencv_java490.so
 
 RUN ldconfig
 
