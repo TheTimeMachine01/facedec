@@ -85,7 +85,7 @@ RUN make install
 
 RUN ls -la ${INSTALL_DIR}/share/java/opencv4/
 RUN ls -la ${INSTALL_DIR}/lib/
-RUN ls -la ${INSTALL_DIR}/share/java/opencv4/opencv-${OPENCV_VERSION//./}.jar
+RUN ls -la ${INSTALL_DIR}/share/java/opencv4/opencv-490.jar
 
 RUN ldconfig
 
