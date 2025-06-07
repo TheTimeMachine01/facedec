@@ -91,6 +91,9 @@ RUN ldconfig
 
 FROM ubuntu:22.04
 
+ENV OPENCV_VERSION=4.9.0
+ENV INSTALL_DIR=/usr/local
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-21-jre-headless \
     libgl1-mesa-glx \
