@@ -3,14 +3,11 @@ package com.application.facedec.controller;
 //import nu.pattern.OpenCV;
 import com.application.facedec.config.SecurityUtils;
 import com.application.facedec.entity.Employee;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.opencv.core.Core;
 
 @RestController
 public class HealthController {
