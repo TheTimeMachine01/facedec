@@ -25,6 +25,8 @@ public class HealthController {
 
     @GetMapping("/lib")
     public String Libcheck() {
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+
         try {
             // Attempt a very simple OpenCV operation to verify the native library is loaded and working.
             // When BUILD_FAT_JAVA_LIB=ON, the native library (libopencv_javaXXX.so)
@@ -38,14 +40,16 @@ public class HealthController {
             dummyMat.release();
 
             // If we reach here, it means OpenCV native code was successfully loaded and initialized
-            return "Application is healthy! OpenCV version: " + opencvVersion + ". Dummy Mat created successfully.";
+            return STR."Application is healthy! OpenCV version: \{opencvVersion}. Dummy Mat created successfully.";
 
         } catch (Exception e) {
             // If any exception occurs during OpenCV operation, it means something is wrong
             // (e.g., native library not loaded, or an issue during Mat instantiation)
             e.printStackTrace(); // Log the full stack trace to your application logs for debugging
-            return "Application health check failed! Error with OpenCV: " + e.getMessage();
+            return STR."Application health check failed! Error with OpenCV: \{e.getMessage()}";
         }
+
+//        return "OpenCV loaded Sucessfully!";
     }
 
     @GetMapping("/user")

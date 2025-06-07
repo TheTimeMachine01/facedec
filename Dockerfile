@@ -89,6 +89,7 @@ RUN make install
 RUN ls -la ${INSTALL_DIR}/share/java/opencv4/
 RUN ls -la ${INSTALL_DIR}/lib/
 RUN ls -la ${INSTALL_DIR}/share/java/opencv4/${ACTUAL_OPENCV_JAR_NAME}
+RUN ls -lh ${INSTALL_DIR}/lib/libopencv_java490.so
 
 RUN ldconfig
 
@@ -98,11 +99,29 @@ ENV OPENCV_VERSION=4.9.0
 ENV INSTALL_DIR=/usr/local
 
 ENV ACTUAL_OPENCV_JAR_NAME="opencv-490.jar"
+ENV ACTUAL_OPENCV_LIB_NAME="libopencv_java490.so"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-21-jre-headless \
     libgl1-mesa-glx \
     libjpeg-turbo8 \
+    libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libfontconfig1 \
+    libxtst6 \
+    libgtk2.0-0 \
+    libusb-1.0-0-dev \
+    libavcodec-dev \
+    libavformat-dev \
+    libswscale-dev \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libtiff-dev \
+    zlib1g-dev \
+    curl \
     # Include other runtime dependencies if your specific OpenCV usage requires them
     # Based on the build stage, you might need libgtk-3-0, libavcodec58, etc.
     # Check the "ldd" command on the .so files in a running container if you face missing libraries
@@ -113,12 +132,21 @@ ENV PATH=$JAVA_HOME/bin:$PATH
 
 WORKDIR /app
 
-#ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-ENV JAVA_OPTS="-Djava.library.path=${INSTALL_DIR}/share/java/opencv4"
-
-ENV LD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/share/java/opencv4:$LD_LIBRARY_PATH
+RUN mkdir -p ${INSTALL_DIR}/share/java/opencv4
+RUN mkdir -p ${INSTALL_DIR}/lib # Make sure this exists for the native lib
 
 COPY --from=opencv_builder ${INSTALL_DIR}/share/java/opencv4/${ACTUAL_OPENCV_JAR_NAME} /app/
+
+COPY --from=opencv_builder ${INSTALL_DIR}/lib/${ACTUAL_OPENCV_LIB_NAME} /app/lib/
+
+
+#ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+ENV JAVA_OPTS="-Djava.library.path=/app/lib"
+#ENV JAVA_OPTS="-Djava.library.path=${INSTALL_DIR}/share/java/opencv4"
+
+#ENV LD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/share/java/opencv4:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=/app/lib:$LD_LIBRARY_PATH
+
 COPY --from=build /app/target/*.jar /app/facedec.jar
 
 ENV PORT=8080
