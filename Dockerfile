@@ -83,6 +83,10 @@ RUN cmake \
 RUN make -j$(nproc)
 RUN make install
 
+RUN ls -la ${INSTALL_DIR}/share/java/opencv4/
+RUN ls -la ${INSTALL_DIR}/lib/
+RUN ls -la ${INSTALL_DIR}/share/java/opencv4/opencv-${OPENCV_VERSION}.jar
+
 RUN ldconfig
 
 FROM ubuntu:22.04
