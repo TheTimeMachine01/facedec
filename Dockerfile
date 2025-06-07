@@ -98,7 +98,11 @@ FROM ubuntu:22.04
 ENV OPENCV_VERSION=4.9.0
 ENV INSTALL_DIR=/usr/local
 
-ENV ACTUAL_OPENCV_JAR_NAME="opencv-490.jar"
+RUN export ACTUAL_OPENCV_JAR_NAME="opencv-${OPENCV_VERSION//./}.jar" \
+    && echo "Actual OpenCV Java JAR name is: $ACTUAL_OPENCV_JAR_NAME" \
+    && echo "ENV ACTUAL_OPENCV_JAR_NAME=$ACTUAL_OPENCV_JAR_NAME" >> /etc/profile
+
+#ENV ACTUAL_OPENCV_JAR_NAME="opencv-490.jar"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-21-jre-headless \
