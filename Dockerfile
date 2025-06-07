@@ -85,7 +85,7 @@ RUN make install
 
 RUN ls -la ${INSTALL_DIR}/share/java/opencv4/
 RUN ls -la ${INSTALL_DIR}/lib/
-RUN ls -la ${INSTALL_DIR}/share/java/opencv4/opencv-${OPENCV_VERSION}.jar
+RUN ls -la ${INSTALL_DIR}/share/java/opencv4/opencv-${OPENCV_VERSION//./}.jar
 
 RUN ldconfig
 
@@ -113,7 +113,7 @@ ENV JAVA_OPTS="-Djava.library.path=${INSTALL_DIR}/share/java/opencv4"
 
 ENV LD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/share/java/opencv4:$LD_LIBRARY_PATH
 
-COPY --from=opencv_builder ${INSTALL_DIR}/share/java/opencv4/opencv-${OPENCV_VERSION}.jar /app/
+COPY --from=opencv_builder ${INSTALL_DIR}/share/java/opencv4/opencv-${OPENCV_VERSION//./}.jar /app/
 COPY --from=build /app/target/*.jar /app/facedec.jar
 
 ENV PORT=8080
