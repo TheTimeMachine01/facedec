@@ -83,9 +83,13 @@ RUN cmake \
 RUN make -j$(nproc)
 RUN make install
 
+RUN export ACTUAL_OPENCV_JAR_NAME="opencv-${OPENCV_VERSION//./}.jar" \
+    && echo "Actual OpenCV Java JAR name is: $ACTUAL_OPENCV_JAR_NAME" \
+    && echo "ENV ACTUAL_OPENCV_JAR_NAME=$ACTUAL_OPENCV_JAR_NAME" >> /etc/profile
+
 RUN ls -la ${INSTALL_DIR}/share/java/opencv4/
 RUN ls -la ${INSTALL_DIR}/lib/
-RUN ls -la ${INSTALL_DIR}/share/java/opencv4/opencv-490.jar
+RUN ls -la ${INSTALL_DIR}/share/java/opencv4/opencv-${OPENCV_VERSION//./}.jar
 
 RUN ldconfig
 
@@ -93,6 +97,8 @@ FROM ubuntu:22.04
 
 ENV OPENCV_VERSION=4.9.0
 ENV INSTALL_DIR=/usr/local
+
+ENV ACTUAL_OPENCV_JAR_NAME="opencv-490.jar"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-21-jre-headless \
@@ -113,7 +119,7 @@ ENV JAVA_OPTS="-Djava.library.path=${INSTALL_DIR}/share/java/opencv4"
 
 ENV LD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/share/java/opencv4:$LD_LIBRARY_PATH
 
-COPY --from=opencv_builder ${INSTALL_DIR}/share/java/opencv4/opencv-${OPENCV_VERSION//./}.jar /app/
+COPY --from=opencv_builder ${INSTALL_DIR}/share/java/opencv4/${ACTUAL_OPENCV_JAR_NAME} /app/
 COPY --from=build /app/target/*.jar /app/facedec.jar
 
 ENV PORT=8080
