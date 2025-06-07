@@ -70,7 +70,7 @@ RUN cmake \
     -D CMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
     -D BUILD_JAVA=ON \
     -D BUILD_FAT_JAVA_LIB=ON \
-    -D BUILD_SHARED_LIBS=OFF \
+    -D BUILD_SHARED_LIBS=ON \
     -D OPENCV_EXTRA_MODULES_PATH=/opt/opencv_build/opencv_contrib/modules \
     -D BUILD_EXAMPLES=OFF \
     -D BUILD_TESTS=OFF \
