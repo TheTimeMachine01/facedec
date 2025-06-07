@@ -136,7 +136,7 @@ RUN mkdir -p ${INSTALL_DIR}/lib # Make sure this exists for the native lib
 
 COPY --from=opencv_builder ${INSTALL_DIR}/share/java/opencv4/${ACTUAL_OPENCV_JAR_NAME} /app/
 
-COPY --from=opencv_builder ${INSTALL_DIR}/lib/${ACTUAL_OPENCV_LIB_NAME} /app/lib/
+#COPY --from=opencv_builder ${INSTALL_DIR}/lib/${ACTUAL_OPENCV_LIB_NAME} /app/lib/
 
 
 #ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
