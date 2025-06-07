@@ -8,6 +8,8 @@ FROM ubuntu:22.04 AS opencv_builder
 ENV OPENCV_VERSION=4.9.0
 ENV INSTALL_DIR=/usr/local
 
+ENV ACTUAL_OPENCV_JAR_NAME="opencv-490.jar"
+
 RUN apt-get update
 
 # DEBUGGING STEP 2: Install core build essentials first
@@ -83,13 +85,10 @@ RUN cmake \
 RUN make -j$(nproc)
 RUN make install
 
-RUN export ACTUAL_OPENCV_JAR_NAME="opencv-${OPENCV_VERSION//./}.jar" \
-    && echo "Actual OpenCV Java JAR name is: $ACTUAL_OPENCV_JAR_NAME" \
-    && echo "ENV ACTUAL_OPENCV_JAR_NAME=$ACTUAL_OPENCV_JAR_NAME" >> /etc/profile
 
 RUN ls -la ${INSTALL_DIR}/share/java/opencv4/
 RUN ls -la ${INSTALL_DIR}/lib/
-RUN ls -la ${INSTALL_DIR}/share/java/opencv4/opencv-${OPENCV_VERSION//./}.jar
+RUN ls -la ${INSTALL_DIR}/share/java/opencv4/${ACTUAL_OPENCV_JAR_NAME}
 
 RUN ldconfig
 
