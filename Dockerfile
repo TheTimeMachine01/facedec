@@ -154,4 +154,4 @@ COPY --from=build /app/target/*.jar /app/facedec.jar
 
 ENV PORT=8080
 EXPOSE 8080
-ENTRYPOINT ["java","${JAVA_OPTS}","--enable-preview","-jar","facedec.jar"]
+ENTRYPOINT ["java","--enable-preview","-jar","facedec.jar"]
