@@ -89,7 +89,6 @@ RUN make install
 RUN ls -la ${INSTALL_DIR}/share/java/opencv4/
 RUN ls -la ${INSTALL_DIR}/lib/
 RUN ls -la ${INSTALL_DIR}/share/java/opencv4/${ACTUAL_OPENCV_JAR_NAME}
-RUN ls -la ${INSTALL_DIR}/lib/${ACTUAL_OPENCV_JAR_NAME}
 
 RUN ldconfig
 
@@ -122,6 +121,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtiff-dev \
     zlib1g-dev \
     curl \
+    libtbb-dev \
+    libatlas-base-dev \
+    libdc1394-dev \
+    libgtk-3-0 \
+    libx264-164 \
+    libxvidcore4 \
+    libgfortran5 \
     # Include other runtime dependencies if your specific OpenCV usage requires them
     # Based on the build stage, you might need libgtk-3-0, libavcodec58, etc.
     # Check the "ldd" command on the .so files in a running container if you face missing libraries
@@ -132,23 +138,21 @@ ENV PATH=$JAVA_HOME/bin:$PATH
 
 WORKDIR /app
 
+RUN mkdir -p /app/lib
+
 RUN mkdir -p ${INSTALL_DIR}/share/java/opencv4
 RUN mkdir -p ${INSTALL_DIR}/lib # Make sure this exists for the native lib
 
 COPY --from=opencv_builder ${INSTALL_DIR}/share/java/opencv4/${ACTUAL_OPENCV_JAR_NAME} /app/
 
-#COPY --from=opencv_builder ${INSTALL_DIR}/lib/${ACTUAL_OPENCV_LIB_NAME} /app/lib/
+COPY --from=opencv_builder ${INSTALL_DIR}/share/java/opencv4/${ACTUAL_OPENCV_LIB_NAME} /app/lib/
 
 
-#ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 ENV JAVA_OPTS="-Djava.library.path=/app/lib"
-#ENV JAVA_OPTS="-Djava.library.path=${INSTALL_DIR}/share/java/opencv4"
-
-#ENV LD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/share/java/opencv4:$LD_LIBRARY_PATH
 ENV LD_LIBRARY_PATH=/app/lib:$LD_LIBRARY_PATH
 
 COPY --from=build /app/target/*.jar /app/facedec.jar
 
 ENV PORT=8080
 EXPOSE 8080
-ENTRYPOINT ["java","--enable-preview","-jar","facedec.jar"]
+ENTRYPOINT ["java","${JAVA_OPTS}","--enable-preview","-jar","facedec.jar"]

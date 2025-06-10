@@ -25,7 +25,7 @@ public class HealthController {
 
     @GetMapping("/lib")
     public String Libcheck() {
-//        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
         try {
             // Attempt a very simple OpenCV operation to verify the native library is loaded and working.
