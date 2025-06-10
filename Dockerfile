@@ -125,7 +125,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libatlas-base-dev \
     libdc1394-dev \
     libgtk-3-0 \
-    libx264-164 \
     libxvidcore4 \
     libgfortran5 \
     # Include other runtime dependencies if your specific OpenCV usage requires them
