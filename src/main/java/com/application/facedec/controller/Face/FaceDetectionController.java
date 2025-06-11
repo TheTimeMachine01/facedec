@@ -38,6 +38,8 @@ public class FaceDetectionController {
         Employee currentUser = securityUtils.getAuthenticatedUser();
         Long userId = currentUser.getId();
 
+        System.out.println(userId);
+
         if (faceDetectionRepository.existsByUserId(userId)) {
 //            return ResponseEntity.status(HttpStatus.CONFLICT).body("Face data already available for this user.");
             return geh.handleError("Face data already available for this user", HttpStatus.CONFLICT);

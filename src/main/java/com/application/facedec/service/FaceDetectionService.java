@@ -9,6 +9,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,7 +23,7 @@ import java.util.List;
 
 @Service
 public class FaceDetectionService {
-    private static final String HAAR_CASCADE_FILE = "src/main/resources/haarcascade_frontalface_default.xml";
+    private static final String HAAR_CASCADE_FILE = "haarcascade_frontalface_default.xml";
     private static final int RECTANGLE_THICKNESS = 2;
 
     @Autowired
@@ -31,40 +32,8 @@ public class FaceDetectionService {
     @Autowired
     private UserRepository userRepository;
 
-//    public List<Rect> detectFaces(MultipartFile file) throws Exception {
-//        // Load the Haar Cascade for face detection
-//        CascadeClassifier faceDetector = new CascadeClassifier(HAAR_CASCADE_FILE);
-//
-//        // Save the uploaded image locally
-//        String tempDir = System.getProperty("java.io.tmpdir");
-//        String tempFilePath = tempDir + File.separator + file.getOriginalFilename();
-//        Files.write(Paths.get(tempFilePath), file.getBytes());
-//
-//        // Read the image using OpenCV
-//        Mat image = Imgcodecs.imread(tempFilePath);
-//
-//        // Convert to grayscale (Haar Cascade works best with grayscale images)
-//        Mat grayImage = new Mat();
-//        Imgproc.cvtColor(image, grayImage, Imgproc.COLOR_BGR2GRAY);
-//
-//        // Detect faces
-//        MatOfRect faceDetections = new MatOfRect();
-//        faceDetector.detectMultiScale(grayImage, faceDetections);
-//
-//        // Get the face rectangles
-//        List<Rect> faces = new ArrayList<>();
-//        for (Rect rect : faceDetections.toArray()) {
-//            faces.add(rect);
-//            // Draw rectangles around detected faces (optional)
-//            Imgproc.rectangle(image, rect, new Scalar(0, 255, 0), 2);
-//        }
-//
-//        // Save annotated image for debugging (optional)
-//        String annotatedFilePath = tempDir + "/annotated_" + file.getOriginalFilename();
-//        Imgcodecs.imwrite(annotatedFilePath, image);
-//
-//        return faces;
-//    }
+
+    private CascadeClassifier faceDetector;
 
     public List<Rect> detectFaces(MultipartFile file, Long userId) throws IOException, IOException {
 
@@ -74,7 +43,12 @@ public class FaceDetectionService {
             throw new RuntimeException("Face data already available for this user.");
         }
 
-        CascadeClassifier faceDetector = new CascadeClassifier(HAAR_CASCADE_FILE);
+        File cascadeFile = new ClassPathResource(HAAR_CASCADE_FILE).getFile();
+        System.out.println(STR."Attempting to load Haar Cascade from absolute path: \{cascadeFile.getAbsolutePath()}");
+        CascadeClassifier faceDetector = new CascadeClassifier(cascadeFile.getAbsolutePath());
+
+        if (faceDetector.empty()) System.out.println("Face detector is empty"); else System.out.println("Face detector is loaded");
+
         String tempDir = System.getProperty("java.io.tmpdir");
         String tempFileName = STR."\{userId}_\{LocalDateTime.now().toString().replace(":", "-")}_\{file.getOriginalFilename()}";
         String tempFilePath = tempDir + File.separator + tempFileName;
@@ -118,10 +92,6 @@ public class FaceDetectionService {
         } catch (Exception e) {
             throw new RuntimeException(STR."Error occured :\{e}");
         }
-//        finally {
-//            // Delete the temporary file
-//            Files.deleteIfExists(Paths.get(tempFilePath));
-//        }
     }
 
 
