@@ -13,6 +13,9 @@ import java.time.LocalTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "attendance", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"user_id", "attendance_date"})
+}) // Explicitly naming the table
 public class Attendance {
 
     @Id
@@ -26,6 +29,7 @@ public class Attendance {
     @Enumerated(EnumType.STRING)
     private DayOfWeek day; // Enum for Monday, Tuesday, etc.
 
+    @Column(name = "attendance_date", nullable = false)
     private LocalDate date;
 
     @Column(name = "in_time")
@@ -38,5 +42,31 @@ public class Attendance {
     private FaceMatchStatus faceData;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "holiday_status", columnDefinition = "VARCHAR(255) DEFAULT 'NA'")
     private HolidayStatus holidayStatus;
+
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    public Attendance(Employee employee, LocalDate today, LocalTime now, DayOfWeek dayOfWeek, FaceMatchStatus faceMatchStatus, Double latitude, Double longitude) {
+        this.user = employee; // Correctly assign employee
+        this.date = today;     // Correctly assign date
+        this.inTime = now; // Correctly assign inTime
+        this.day = dayOfWeek;       // Correctly assign day
+        this.faceData = faceMatchStatus;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.holidayStatus = HolidayStatus.NA; // Default to NA
+    }
+
+    public Attendance(Employee user, LocalDate date, DayOfWeek dayOfWeek, HolidayStatus status) {
+        this.user = user;
+        this.date = date;
+        this.day = dayOfWeek; // Added for completeness, although not strictly needed if only holiday status is set.
+        this.holidayStatus = status; // Assign the status parameter
+        // inTime, outTime, faceData, latitude, longitude will be null initially
+    }
 }

@@ -2,12 +2,20 @@ package com.application.facedec.service;
 
 import com.application.facedec.config.JwtTokenProvider;
 import com.application.facedec.dto.LoginRequest;
+import com.application.facedec.dto.LoginResponse;
+import com.application.facedec.entity.RefreshToken;
+import com.application.facedec.repository.RefreshTokenRepository;
+import jakarta.security.auth.message.AuthException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -18,22 +26,73 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
-    @Override
-    public String login(LoginRequest loginRequest) {
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Value("${jwt.refresh-expiration-time}") // <-- Here jwtRefreshExpirationMs is injected
+    private long jwtRefreshExpirationMs;
+
+    @Transactional
+    public LoginResponse login(LoginRequest loginRequest) {
         // 01 - AuthenticationManager is used to authenticate the user
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 loginRequest.getEmail(),
                 loginRequest.getPassword()
         ));
 
-        /* 02 - SecurityContextHolder is used to allows the rest of the application to know
-        that the user is authenticated and can use user data from Authentication object */
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // 03 - Generate the token based on username and secret key
-        String token = jwtTokenProvider.generateToken(authentication);
+        String accessToken = jwtTokenProvider.generateToken(authentication);
 
-        // 04 - Return the token to controller
-        return token;
+        String refreshTokenString = jwtTokenProvider.generateRefreshTokenString();
+
+        Instant expiryDate = Instant.now().plusMillis(jwtRefreshExpirationMs);
+
+        RefreshToken refreshToken = new RefreshToken(refreshTokenString, expiryDate, loginRequest.getEmail());
+        refreshTokenRepository.save(refreshToken);
+
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setAccessToken(accessToken);
+        loginResponse.setRefreshToken(refreshTokenString);
+
+
+        return loginResponse;
+    }
+
+    @Transactional
+    public LoginResponse refreshToken(String refreshToken) throws AuthException {
+
+        RefreshToken existingRefreshToken = refreshTokenRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new AuthException("Refresh token not found or invalid."));
+
+        if (existingRefreshToken.getExpiryDate().isBefore(Instant.now())) {
+            refreshTokenRepository.delete(existingRefreshToken);
+            throw new AuthException("Refresh token has expired. Please log in again.");
+        }
+
+        if (existingRefreshToken.isRevoked()) {
+            throw new AuthException("Refresh token has been revoked. Please log in again.");
+        }
+
+        // Invalidate the old token (delete it or mark as revoked)
+        refreshTokenRepository.delete(existingRefreshToken);
+
+        String newAccessToken = jwtTokenProvider.generateTokenFromUsername(existingRefreshToken.getUserEmail());
+
+        // Generate a new Refresh Token for rotation and save it
+        String newRefreshTokenString = jwtTokenProvider.generateRefreshTokenString();
+        // Here it is used again: to calculate the expiry date for the NEW RefreshToken entity
+        Instant newExpiryDate = Instant.now().plusMillis(jwtRefreshExpirationMs); // <--- USED HERE
+//        RefreshToken newRefreshToken = new RefreshToken(newRefreshTokenString, newExpiryDate, existingRefreshToken.getUserEmail());
+
+        RefreshToken newRefreshToken = new RefreshToken(newRefreshTokenString, newExpiryDate, existingRefreshToken.getUserEmail());
+        refreshTokenRepository.save(newRefreshToken);
+
+
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setAccessToken(newAccessToken);
+        loginResponse.setRefreshToken(refreshToken);
+
+        return loginResponse;
     }
 }
