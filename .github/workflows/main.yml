@@ -69,7 +69,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          tags: ${{ env.DOCKER_IMAGE_REPO }}:test-build
+          tags: ashishv01/facedec:test-build
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
