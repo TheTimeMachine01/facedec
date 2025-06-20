@@ -68,6 +68,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          load: true
           push: false
           tags: ashishv01/facedec:test-build
           cache-from: type=gha
