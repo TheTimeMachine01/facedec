@@ -57,7 +57,7 @@ jobs:
 
 # --- START NEW DEBUGGING STEP ---
       - name: Print DOCKER_IMAGE_REPO value
-        run: echo "The DOCKER_IMAGE_REPO is ${{ env.DOCKER_IMAGE_REPO }}"
+        run: echo "The DOCKER_IMAGE_REPO is ${{ secrets.DOCKER_IMAGE_NAME }}"
 # Expected output in logs: "The DOCKER_IMAGE_REPO is: ***"
 # GitHub automatically masks secrets.
 # --- END NEW DEBUGGING STEP ---
