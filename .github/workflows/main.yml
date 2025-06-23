@@ -130,8 +130,40 @@ jobs:
       - name: Print final facedec-app logs
         if: always()
         run: |
-          timeout 120s sh -c 'docker logs -f facedec-app 2>&1 | grep -m 1 "Started FacedecApplication"' \
-            || { echo "ERROR: Application startup log not found within 120 seconds or container issue."; exit 1; }
+          echo "Waiting for Spring Boot application to start..."
+
+          # --- Part 1: Wait for log message with explicit loop and timeout ---
+          START_TIME=$(date +%s) # Get current timestamp in seconds
+          TIMEOUT=120           # Timeout in seconds
+          LOG_MESSAGE_FOUND=false
+
+          while true; do
+            # Check if timeout has been reached
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+            if [ "$ELAPSED_TIME" -ge "$TIMEOUT" ]; then
+              echo "ERROR: Application startup log not found within ${TIMEOUT} seconds."
+              docker logs facedec-app --tail 20 || true # Print last 20 lines for debugging
+              exit 1 # Fail the step
+            fi
+          
+            # Check for the log message
+            if docker logs facedec-app | grep -q "Started FacedecApplication"; then
+              echo "Spring Boot application log message 'Started FacedecApplication' found."
+              LOG_MESSAGE_FOUND=true
+              break # Exit the loop
+            fi
+          
+            echo "Waiting for log message... (Elapsed time: ${ELAPSED_TIME}s / Timeout: ${TIMEOUT}s)"
+            sleep 3 # Wait for 3 seconds before checking again
+          done
+
+          # Check if the log message was actually found
+          if [ "$LOG_MESSAGE_FOUND" = "false" ]; then
+            echo "ERROR: Application startup log was not found even after the loop." # Should not happen, but a double-check
+            exit 1
+          fi
+            
 
       - name: Installing Curl
         run: |
