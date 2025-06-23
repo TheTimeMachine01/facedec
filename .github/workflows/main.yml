@@ -165,7 +165,7 @@ jobs:
     needs: build-test-and-push-docker
     runs-on: ubuntu-latest
     environment: production
-    if: github.event.inputs.deploy_target != 'none'
+    if: github.event.name == 'workflow_dispatch' && github.event.inputs.deploy_target != 'none'
 
     steps:
       - name: Checkout repository
