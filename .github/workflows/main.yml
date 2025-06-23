@@ -76,23 +76,20 @@ jobs:
 
       - name: Run Docker Compose Environment for Testing
         run: |
-          # Start your Postgres application container
-          echo "Starting dummy database (PostgreSQL) and application containers..."
-          docker network create app-network || true
-          docker run -d --name test-postgres --network app-network \
-            -e POSTGRES_DB=testdb \
-            -e POSTGRES_USER=testuser \
-            -e POSTGRES_PASSWORD=testpassword \
-            -p 5432:5432 \
-            postgres:16-alpine
+          docker run -d --name test-mysql --network app-network \
+          -e MYSQL_DATABASE=attendance_db \
+          -e MYSQL_USER=user \
+          -e MYSQL_PASSWORD=password \
+          -e MYSQL_ROOT_PASSWORD=rootpassword \
+          -p 3306:3306 \
+          mysql:8.0
           
-          # Start your Spring Boot application container
           docker run -d --name facedec-app --network app-network \
-            -e DB_URL="jdbc:postgresql://test-postgres:5432/testdb" \
-            -e DB_USERNAME="testuser" \
-            -e DB_PASSWORD="testpassword" \
-            -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} \
-            ashishv01/facedec:test-build
+          -e SPRING_DATASOURCE_URL="jdbc:mysql://test-mysql:3306/attendance_db" \
+          -e SPRING_DATASOURCE_USERNAME="user" \
+          -e SPRING_DATASOURCE_PASSWORD="password" \
+          -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} \
+          ashishv01/facedec:test-build
           
           echo "Waiting for PostgreSQL to be ready..."
           for i in $(seq 1 60); do
