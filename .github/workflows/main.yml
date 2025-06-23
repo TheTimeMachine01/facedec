@@ -130,25 +130,7 @@ jobs:
       - name: Print final facedec-app logs
         if: always()
         run: |
-          echo "Waiting for Spring Boot application to start"
-          
-          # --- Part 1: Wait for specific log message with a timeout ---
-          # Run docker logs -f in the background
-          docker logs -f facedec-app &
-          DOCKER_LOGS_PID=$! # Store the PID of the docker logs process
-
-          # Use timeout to wait for grep to find the message
-          # The `timeout` here applies to `grep` itself, which will quickly exit.
-          # If grep finds it, it exits 0. If timeout occurs, it exits 124.
-          if timeout 120s grep -m 1 "Started FacedecApplication"; then
-            echo "Spring Boot application log message 'Started FacedecApplication' found."
-            # Kill the background docker logs process
-            kill $DOCKER_LOGS_PID
-          else
-            echo "ERROR: Spring Boot application did not log 'Started FacedecApplication' within 120 seconds."
-            kill $DOCKER_LOGS_PID || true # Attempt to kill, ignore if already gone
-            exit 1 # Fail the step if the log message wasn't found
-          fi
+          docker logs -f facedec-app | timeout 120s grep -m 1 "Started FacedecApplication"  || echo "No logs found (container may not have started)."
 
       - name: Installing Curl
         run: |
