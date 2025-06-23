@@ -84,7 +84,7 @@ jobs:
           -e MYSQL_USER=user \
           -e MYSQL_PASSWORD=password \
           -e MYSQL_ROOT_PASSWORD=rootpassword \
-          -p 3306:3306 \
+          -p 3307:3307 \
           mysql:8.0
           
          
@@ -120,11 +120,11 @@ jobs:
           # Install netcat if not already present on the runner
           sudo apt-get update && sudo apt-get install -y netcat || true
           for i in $(seq 1 10); do
-            if nc -zv localhost 3306; then # Using localhost as MySQL's port is published to host
-              echo "Host can connect to MySQL on port 3306."
+            if nc -zv localhost 3307; then # Using localhost as MySQL's port is published to host
+              echo "Host can connect to MySQL on port 3307."
               break
             else
-              echo "Host cannot connect to MySQL on port 3306, retrying... ($i/10)"
+              echo "Host cannot connect to MySQL on port 3307, retrying... ($i/10)"
               sleep 2
             fi
             if [ "$i" -eq 10 ]; then
@@ -140,7 +140,7 @@ jobs:
       - name: Spring Boot App on Docker
         run: |
           docker run -d --name facedec-app --network app-network \
-          -e SPRING_DATASOURCE_URL="jdbc:mysql://localhost:3306/attendance_db" \
+          -e SPRING_DATASOURCE_URL="jdbc:mysql://test-mysql:3307/attendance_db" \
           -e SPRING_DATASOURCE_USERNAME="user" \
           -e SPRING_DATASOURCE_PASSWORD="password" \
           -e JWT_SECRET="${{ vars.JWT_SECRET }}" \
