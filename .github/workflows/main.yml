@@ -74,6 +74,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Create Docker network
+        run: docker network create app-network || true
+
       - name: Run Docker Compose Environment for Testing
         run: |
           docker run -d --name test-mysql --network app-network \
