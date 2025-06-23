@@ -157,3 +157,93 @@ jobs:
             ashishv01/facedec:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-test-and-push-docker
+    runs-on: ubuntu-latest
+    environment: production
+    if: github.event.inputs.deploy_target != 'none'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set Deploy Target Variable
+        run: echo "DEPLOY_TARGET=${{ github.event.inputs.deploy_target }}" >> $GITHUB_ENV
+
+      - name: Deploy to Railway
+        if: env.DEPLOY_TARGET == 'railway'
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          MYSQL_DATABASE_URL: ${{ secrets.RAILWAY_MYSQL_URL }} # Use a specific secret for Railway MySQL
+        run: |
+          echo "Deploying to Railway..."
+          # 
+          # Install Railway CLI
+          npm install -g @railway/cli
+          #
+          # Login to Railway
+          railway login --token $RAILWAY_TOKEN
+          #
+          # ============================= Instructions ================================================
+          # Set the project and environment (replace with your actual project/environment IDs)
+          # You might need to configure Railway to pick up the Docker image pushed in the previous job.
+          # A common approach is to link your Railway service to your Docker Hub repository.
+          # Alternatively, if Railway supports direct Dockerfile deployment, you'd trigger that here.
+          # For a Docker-based service on Railway, typically you just need to update the service.
+          # Assuming you have a Railway service linked to this GitHub repository or Docker Hub:
+          # You might need to trigger a redeploy on Railway. This often happens automatically on new image pushes
+          # if the service is configured for auto-deploy.
+          # If manual trigger is needed, Railway CLI might have a command like:
+          # railway deploy --service <YOUR_SERVICE_ID> --tag ashishv01/facedec:latest
+          # Or set variables directly if that's how you manage connections
+          #
+          #
+          railway var set SPRING_DATASOURCE_URL="${{ env.MYSQL_DATABASE_URL }}" --service <YOUR_SERVICE_ID>
+          railway var set SPRING_DATASOURCE_USERNAME="${{ secrets.RAILWAY_MYSQL_USERNAME }}" --service <YOUR_SERVICE_ID>
+          railway var set SPRING_DATASOURCE_PASSWORD="${{ secrets.RAILWAY_MYSQL_PASSWORD }}" --service <YOUR_SERVICE_ID>
+          railway var set JWT_SECRET="${{ vars.JWT_SECRET }}" --service <YOUR_SERVICE_ID>
+          railway var set JWT_EXPIRATION_TIME="${{ vars.JWT_EXPIRATION_TIME }}" --service <YOUR_SERVICE_ID>
+          railway var set REFRESH_EXPIRATION_TIME="${{ vars.REFRESH_EXPIRATION_TIME }}" --service <YOUR_SERVICE_ID>
+          
+          echo "Railway deployment initiated. Check Railway dashboard for status."
+
+      - name: Deploy to Render
+        if: env.DEPLOY_TARGET == 'render'
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          MYSQL_DATABASE_URL: ${{ secrets.RENDER_MYSQL_URL }} # Use a specific secret for Render MySQL
+        run: |
+          echo "Deploying to Render..."
+          #
+          # Render deployments are often triggered via webhooks or Render CLI.
+          # If you have a Render service configured to auto-deploy from Docker Hub, pushing the image
+          # in the previous step might be enough.
+          # To trigger a manual deploy for a service via Render API (if linked to Docker):
+          # You'll need to know your Render service ID.
+          
+          # Install curl if not already present
+          sudo apt-get update && sudo apt-get install -y curl
+          
+          # Trigger Render deploy webhook (replace with your service's deploy hook URL)
+          # You would typically find this in your Render service settings.
+          # This example assumes you have a Render service connected to your Docker Hub.
+          # The deploy hook would then pull the latest image.
+          # For setting environment variables, Render usually has its own UI or API.
+          # If you need to set them via API, it would involve more complex API calls.
+          # For now, let's assume variables are managed in Render's UI or are picked up from a .env file if supported.
+          
+          # Example of triggering a deploy using a webhook (replace with your actual deploy hook URL)
+          # Render's API often requires specific headers and JSON payloads for setting env vars,
+          # which is more complex than a simple curl. It's usually managed in their dashboard.
+          # If you want to trigger a deploy, you might have a "Deploy Hook" URL in your Render service settings.
+          # curl -X POST YOUR_RENDER_DEPLOY_HOOK_URL
+          
+          echo "Render deployment initiated. Check Render dashboard for status."
+          echo "Remember to set MySQL connection details and other environment variables directly in Render's dashboard for your service."
+          echo "SPRING_DATASOURCE_URL: ${{ env.MYSQL_DATABASE_URL }}"
+          echo "SPRING_DATASOURCE_USERNAME: ${{ secrets.RENDER_MYSQL_USERNAME }}"
+          echo "SPRING_DATASOURCE_PASSWORD: ${{ secrets.RENDER_MYSQL_PASSWORD }}"
+          echo "JWT_SECRET: ${{ vars.JWT_SECRET }}"
+          echo "JWT_EXPIRATION_TIME: ${{ vars.JWT_EXPIRATION_TIME }}"
+          echo "REFRESH_EXPIRATION_TIME: ${{ vars.REFRESH_EXPIRATION_TIME }}"
