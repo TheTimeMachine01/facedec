@@ -101,7 +101,7 @@ jobs:
       - name: Spring Boot App on Docker
         run: |
           docker run -d --name facedec-app --network app-network \
-          -e SPRING_DATASOURCE_URL="jdbc:mysql://test-mysql:3306/attendance_db" \
+          -e SPRING_DATASOURCE_URL="jdbc:mysql://localhost:3306/attendance_db" \
           -e SPRING_DATASOURCE_USERNAME="user" \
           -e SPRING_DATASOURCE_PASSWORD="password" \
           -e JWT_SECRET="${{ vars.JWT_SECRET }}" \
