@@ -88,9 +88,10 @@ jobs:
           mysql:8.0
           
           echo "Waiting for MySQL to be ready..."
-          
-          docker logs -f test-mysql || echo "No logs found (container may not have started)."
 
+      - name: Print final facedec-app logs
+        if: always()
+        run: docker logs -f test-mysql || echo "No logs found (container may not have started)."
 
       - name: Spring Boot App on Docker
         run: |
