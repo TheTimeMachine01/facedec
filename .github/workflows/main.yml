@@ -35,7 +35,7 @@ jobs:
 
       - name: Workflow name knowing
         run: |
-          echo Event Name: ${{ github.event.name }} && Deploy Target ${{ github.event.inputs.deploy_target }}
+          echo "Event Name: ${{ github.event.name }} && Deploy Target ${{ github.event.inputs.deploy_target }}"
               
 
       - name: Set up JDK ${{ env.JAVA_VERSION }}
