@@ -77,7 +77,7 @@ jobs:
       - name: Create Docker network
         run: docker network create app-network || true
 
-      - name: Run Docker Compose Environment for Testing
+      - name: MySQL on Docker
         run: |
           docker run -d --name test-mysql --network app-network \
           -e MYSQL_DATABASE=attendance_db \
@@ -97,7 +97,9 @@ jobs:
           done
           docker exec test-mysql mysqladmin ping -h localhost --silent || { echo "MySQL did not start!"; exit 1; }
           echo "MySQL is ready."
-          
+
+      - name: Spring Boot App on Docker
+        run: |
           docker run -d --name facedec-app --network app-network \
           -e SPRING_DATASOURCE_URL="jdbc:mysql://test-mysql:3306/attendance_db" \
           -e SPRING_DATASOURCE_USERNAME="user" \
@@ -105,9 +107,13 @@ jobs:
           -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} \
           ashishv01/facedec:test-build
           
-          docker logs facedec-app      
-        
           echo "Waiting for Spring Boot application to start..."
+
+      - name: Spring Application Logs
+        run: docker logs facedec-app
+
+      - name: Testing
+        run: |         
           # Install curl if not already present (should be on ubuntu-latest, but good safeguard)
           sudo apt-get update && sudo apt-get install -y curl
           
