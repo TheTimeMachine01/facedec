@@ -87,6 +87,17 @@ jobs:
           -p 3306:3306 \
           mysql:8.0
           
+          # Wait for MySQL to be ready
+          echo "Waiting for MySQL to be ready..."
+          for i in $(seq 1 60); do
+            # Use mysqladmin to check if the server is up
+            docker exec test-mysql mysqladmin ping -h localhost --silent && break
+            echo "MySQL not ready yet, waiting... ($i/60)"
+            sleep 1
+          done
+          docker exec test-mysql mysqladmin ping -h localhost --silent || { echo "MySQL did not start!"; exit 1; }
+          echo "MySQL is ready."
+          
           docker run -d --name facedec-app --network app-network \
           -e SPRING_DATASOURCE_URL="jdbc:mysql://test-mysql:3306/attendance_db" \
           -e SPRING_DATASOURCE_USERNAME="user" \
@@ -94,21 +105,13 @@ jobs:
           -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} \
           ashishv01/facedec:test-build
           
-          echo "Waiting for PostgreSQL to be ready..."
-          for i in $(seq 1 60); do
-            docker exec test-postgres pg_isready -U testuser -d testdb && break
-            echo "PostgreSQL not ready yet, waiting... ($i/60)"
-            sleep 1
-          done
-          docker exec test-postgres pg_isready -U testuser -d testdb || { echo "PostgreSQL did not start!"; exit 1; }
-          echo "PostgreSQL is ready."
-          
+        
           echo "Waiting for Spring Boot application to start..."
           # Install curl if not already present (should be on ubuntu-latest, but good safeguard)
           sudo apt-get update && sudo apt-get install -y curl
           
            # Loop for health check
-          APP_HEALTH_CHECK_URL="http://localhost:${{ env.APP_PORT }}/actuator/health"
+          APP_HEALTH_CHECK_URL="http://localhost:${{ env.APP_PORT }}/health"
           APP_STARTUP_TIMEOUT=120 # seconds
           
           for i in $(seq 1 ${APP_STARTUP_TIMEOUT}); do
@@ -143,7 +146,7 @@ jobs:
         run: |
           echo "Performing basic operations on the running application..."
           APP_BASE_URL="http://localhost:${{ env.APP_PORT }}"
-          curl -s $APP_BASE_URL/actuator/health | grep '"status":"UP"' || { echo "Health check failed!"; exit 1; }
+          curl -s $APP_BASE_URL/health | grep '"status":"UP"' || { echo "Health check failed!"; exit 1; }
           echo "Health check passed."
           echo "Attempting to create a new user..."
           curl -s -X POST $APP_BASE_URL/users \
@@ -163,8 +166,8 @@ jobs:
         if: always()
         run: |
           echo "Cleaning up Docker containers and network..."
-          docker stop test-postgres facedec-app || true
-          docker rm test-postgres facedec-app || true
+          docker stop test-mysql facedec-app || true
+          docker rm test-mysql facedec-app || true
           docker network rm app-network || true
 
       - name: Push Docker Image to Registry
