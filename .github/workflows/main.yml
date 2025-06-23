@@ -116,42 +116,10 @@ jobs:
         if: always()
         run: docker logs facedec-app || echo "No logs found (container may not have started)."
 
-      - name: Testing
+      - name: Installing Curl
         run: |         
           # Install curl if not already present (should be on ubuntu-latest, but good safeguard)
           sudo apt-get update && sudo apt-get install -y curl
-          
-           # Loop for health check
-          APP_HEALTH_CHECK_URL="http://localhost:${{ env.APP_PORT }}/health"
-          APP_STARTUP_TIMEOUT=120 # seconds
-          
-          for i in $(seq 1 ${APP_STARTUP_TIMEOUT}); do
-            # Use 'curl -s -o /dev/null -w "%{http_code}"' to get only the HTTP status code
-            # and avoid printing the response body to the log unless there's an issue.
-            # Using --retry 0 to not retry on initial connection failure.
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 --max-time 5 ${APP_HEALTH_CHECK_URL})
-            if [ "$HTTP_CODE" -eq 200 ]; then
-              echo "Spring Boot application is ready (HTTP 200)!"
-              break
-            else
-              echo "App not ready yet (HTTP Code: ${HTTP_CODE}), waiting... ($i/${APP_STARTUP_TIMEOUT})"
-              # Fetch logs immediately if it fails to connect for better debug info
-              if [ "$HTTP_CODE" -ne 0 ]; then # Only dump logs if curl actually connected (even if it got non-200)
-                 # Dump logs from the application container to see what went wrong
-                 echo "Dumping facedec-app container logs:"
-                 docker logs facedec-app
-                 echo "End of facedec-app container logs."
-              fi
-              sleep 5 # Wait longer between checks to give app more time to start
-            fi
-            if [ "$i" -eq ${APP_STARTUP_TIMEOUT} ]; then
-              echo "Spring Boot app did not start within ${APP_STARTUP_TIMEOUT} seconds!"
-              echo "Final facedec-app container logs:"
-              docker logs facedec-app # Dump logs one last time
-              exit 1
-            fi
-          done
-          echo "Spring Boot application is ready."
           
       - name: Run Basic Integration Tests
         run: |
