@@ -33,6 +33,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Workflow name knowing
+        run: |
+          echo Event Name: ${{ github.event.name }} && Deploy Target ${{ github.event.inputs.deploy_target }}
+              
+
       - name: Set up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
@@ -129,7 +134,7 @@ jobs:
           docker logs facedec-app || echo "No logs found (container may not have started)."
 
       - name: Installing Curl
-        run: |         
+        run: |
           # Install curl if not already present (should be on ubuntu-latest, but good safeguard)
           sudo apt-get update && sudo apt-get install -y curl
           
