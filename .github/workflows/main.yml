@@ -109,8 +109,12 @@ jobs:
           
           echo "Waiting for Spring Boot application to start..."
 
-      - name: Spring Application Logs
-        run: docker logs facedec-app
+      - name: Finding the Container
+        run: docker ps -a | grep facedec-app && docker logs facedec-app || echo "No facedec-app container found."
+
+      - name: Print final facedec-app logs
+        if: always()
+        run: docker logs facedec-app || echo "No logs found (container may not have started)."
 
       - name: Testing
         run: |         
