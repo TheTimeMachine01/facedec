@@ -130,9 +130,7 @@ jobs:
       - name: Print final facedec-app logs
         if: always()
         run: |
-          echo "Waiting up to 240 seconds for server startup..."
-          sleep 240
-          docker logs facedec-app || echo "No logs found (container may not have started)."
+          timeout 120s docker logs -f facedec-app | grep -m 1 "Started FacedecApplication"  || echo "No logs found (container may not have started)."
 
       - name: Installing Curl
         run: |
