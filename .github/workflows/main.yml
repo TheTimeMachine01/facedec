@@ -84,7 +84,7 @@ jobs:
             -e MYSQL_USER=user \
             -e MYSQL_PASSWORD=password \
             -e MYSQL_ROOT_PASSWORD=rootpassword \
-            -p 3307:3307 \
+            -p 3306:3306 \
             mysql:8.0
           
           echo "Waiting for MySQL to be ready..."
@@ -107,7 +107,7 @@ jobs:
       - name: Spring Boot App on Docker
         run: |
           docker run -d --name facedec-app --network app-network \
-            -e SPRING_DATASOURCE_URL="jdbc:mysql://test-mysql:3307/attendance_db" \
+            -e SPRING_DATASOURCE_URL="jdbc:mysql://test-mysql:3306/attendance_db" \
             -e SPRING_DATASOURCE_USERNAME="user" \
             -e SPRING_DATASOURCE_PASSWORD="password" \
             -e JWT_SECRET="${{ vars.JWT_SECRET }}" \
