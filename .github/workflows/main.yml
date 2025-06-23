@@ -123,7 +123,7 @@ jobs:
 
       - name: Print final facedec-app logs
         if: always()
-        run: docker logs -f facedec-app || echo "No logs found (container may not have started)."
+        run: docker logs facedec-app || echo "No logs found (container may not have started)."
 
       - name: Installing Curl
         run: |         
