@@ -105,6 +105,7 @@ jobs:
           -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} \
           ashishv01/facedec:test-build
           
+          docker logs facedec-app      
         
           echo "Waiting for Spring Boot application to start..."
           # Install curl if not already present (should be on ubuntu-latest, but good safeguard)
