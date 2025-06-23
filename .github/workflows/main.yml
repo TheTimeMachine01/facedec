@@ -104,6 +104,9 @@ jobs:
           -e SPRING_DATASOURCE_URL="jdbc:mysql://test-mysql:3306/attendance_db" \
           -e SPRING_DATASOURCE_USERNAME="user" \
           -e SPRING_DATASOURCE_PASSWORD="password" \
+          -e JWT_SECRET=${{ vars.JWT_SECRET }} \
+          -e JWT_EXPIRATION_TIME=${{ vars.JWT_EXPIRATION_TIME }} \
+          -e REFRESH_EXPIRATION_TIME=${{ vars.REFRESH_EXPIRATION_TIME }} \
           -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} \
           ashishv01/facedec:test-build
           
