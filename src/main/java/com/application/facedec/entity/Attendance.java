@@ -45,20 +45,19 @@ public class Attendance {
     @Column(name = "holiday_status", columnDefinition = "VARCHAR(255) DEFAULT 'NA'")
     private HolidayStatus holidayStatus;
 
-    @Column(name = "latitude")
-    private Double latitude;
+    @Column(name = "in_location", length = 50)
+    private String inLocation;
 
-    @Column(name = "longitude")
-    private Double longitude;
+    @Column(name = "out_location", length = 50)
+    private String outLocation;
 
-    public Attendance(Employee employee, LocalDate today, LocalTime now, DayOfWeek dayOfWeek, FaceMatchStatus faceMatchStatus, Double latitude, Double longitude) {
+    public Attendance(Employee employee, LocalDate date, LocalTime inTime, DayOfWeek dayOfWeek, FaceMatchStatus faceMatchStatus, Double latitude, Double longitude) {
         this.user = employee; // Correctly assign employee
-        this.date = today;     // Correctly assign date
-        this.inTime = now; // Correctly assign inTime
+        this.date = date;     // Correctly assign date
+        this.inTime = inTime; // Correctly assign inTime
         this.day = dayOfWeek;       // Correctly assign day
         this.faceData = faceMatchStatus;
-        this.latitude = latitude;
-        this.longitude = longitude;
+        this.inLocation = String.format("%.6f, %.6f", latitude, longitude);
         this.holidayStatus = HolidayStatus.NA; // Default to NA
     }
 

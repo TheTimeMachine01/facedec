@@ -92,7 +92,7 @@ jobs:
             -e DB_USERNAME="testuser" \
             -e DB_PASSWORD="testpassword" \
             -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} \
-            ${{ env.DOCKER_IMAGE_REPO }}:test-build
+            ashishv01/facedec:test-build
           
           echo "Waiting for PostgreSQL to be ready..."
           for i in $(seq 1 60); do

@@ -3,8 +3,7 @@ package com.application.facedec.dto.Attendance;
 import lombok.Data;
 
 @Data
-public class InLogRequest {
+public class OutLogRequest {
     private double latitude;
     private double longitude;
-    private boolean isFaceMatched;
 }

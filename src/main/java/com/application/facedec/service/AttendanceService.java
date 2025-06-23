@@ -49,14 +49,18 @@ public class AttendanceService {
             return null; // In time already marked for today
         }
 
+//        Late Policy
+
+        System.out.println(STR."Is Face Matched:\{isFaceMatched}");
         Attendance attendance;
+        String inLocationString = String.format("%.6f, %.6f", latitude, longitude);
         if (existingAttendance.isPresent()) {
             // If a record exists (e.g., for a holiday pre-marked without times), update it
             attendance = existingAttendance.get();
             attendance.setDate(today);
             attendance.setInTime(LocalTime.now());
-            attendance.setLatitude(latitude);
-            attendance.setLongitude(longitude);
+            attendance.setInLocation(inLocationString);
+            System.out.println(isFaceMatched);
             attendance.setFaceData(isFaceMatched ? FaceMatchStatus.MATCHED : FaceMatchStatus.NOT_MATCHED);
             // Ensure holiday status is NA if it was set to something else and now they are clocking in
             if (attendance.getHolidayStatus() != null && attendance.getHolidayStatus() != HolidayStatus.NA) {
@@ -80,6 +84,7 @@ public class AttendanceService {
         try {
             return attendanceRepository.save(attendance);
         } catch (Exception e) {
+            System.err.println(STR."Error saving in-time attendance: \{e.getMessage()}"); // Use err for errors
             e.printStackTrace();
             return null;
         }
@@ -92,11 +97,10 @@ public class AttendanceService {
      * @param employee The Employee entity for whom attendance is to be marked.
      * @param latitude The latitude coordinate of the user's location at logout.
      * @param longitude The longitude coordinate of the user's location at logout.
-     * @param isFaceMatched A boolean indicating if the face was successfully matched during logout.
      * @return The updated Attendance record if successful, or null if no "in" record found or an error occurred.
      */
     @Transactional
-    public Attendance markOutTime(Employee employee, Double latitude, Double longitude, Boolean isFaceMatched) {
+    public Attendance markOutTime(Employee employee, Double latitude, Double longitude) {
         LocalDate today = LocalDate.now();
         Optional<Attendance> existingAttendance = attendanceRepository.findByUserAndDate(employee, today);
 
@@ -113,21 +117,23 @@ public class AttendanceService {
         }
 
         attendance.setOutTime(LocalTime.now());
-        // You might want to store logout latitude/longitude separately or update the existing ones
-        // For simplicity, let's update the existing ones for now.
-        // attendance.setLatitude(latitude);
-        // attendance.setLongitude(longitude);
-        // If you want a separate face match status for out time, add another field to Attendance entity
-        // For now, let's assume faceData is for in-time, or you could update it
-        // attendance.setFaceData(isFaceMatched ? FaceMatchStatus.MATCHED : FaceMatchStatus.NOT_MATCHED);
+        String outLocationString = String.format("%.6f, %.6f", latitude, longitude);
+        attendance.setOutLocation(outLocationString); // Set new outLocation field
 
         try {
             return attendanceRepository.save(attendance);
         } catch (Exception e) {
+            System.err.println(STR."Error saving out-time attendance: \{e.getMessage()}"); // Use err for errors
             e.printStackTrace();
             return null;
         }
     }
+
+     public boolean hasEmployeeMarkedInTimeForToday(Employee employee, LocalDate date) {
+         return attendanceRepository.findByUserAndDate(employee, date)
+                                    .filter(a -> a.getInTime() != null)
+                                    .isPresent();
+     }
 
     /**
      * Marks a specific date as a holiday, leave, or absent day for an employee.
@@ -151,8 +157,6 @@ public class AttendanceService {
                 attendance.setInTime(null);
                 attendance.setOutTime(null);
                 attendance.setFaceData(null); // Clear face data as well
-                attendance.setLatitude(null); // Clear location data
-                attendance.setLongitude(null);
             }
             attendance.setHolidayStatus(status);
         } else {

@@ -2,6 +2,7 @@ package com.application.facedec.controller;
 
 import com.application.facedec.config.SecurityUtils;
 import com.application.facedec.dto.Attendance.InLogRequest;
+import com.application.facedec.dto.Attendance.OutLogRequest;
 import com.application.facedec.entity.Attendance;
 import com.application.facedec.entity.Employee;
 import com.application.facedec.entity.HolidayStatus;
@@ -14,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -52,7 +52,12 @@ public class AttendanceController {
 
         double latitude = inLogRequest.getLatitude();
         double longitude = inLogRequest.getLongitude();
-        boolean isFaceMatched = inLogRequest.getIsFaceMatched();
+        boolean isFaceMatched = inLogRequest.isFaceMatched();
+
+        System.out.println();
+        System.out.println(STR."The face matched: \{isFaceMatched}");
+        System.out.println();
+
 
         try {
             Attendance markedAttendance = attendanceService.markInTime(currentUser, latitude, longitude, isFaceMatched);
@@ -70,19 +75,14 @@ public class AttendanceController {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return geh.handleError("Error logging in-time attendance: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return geh.handleError(STR."Error logging in-time attendance: \{e.getMessage()}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
 
     /**
      * Endpoint for marking an employee's daily "out" time attendance.
      * This method requires latitude, longitude (for logout location), and a flag indicating if face matching was successful during logout.
      * It updates an existing "in" record for the current day.
-     * @param latitude The latitude coordinate of the user's location at logout.
-     * @param longitude The longitude coordinate of the user's location at logout.
-     * @param isFaceMatched A boolean indicating if the user's face was successfully matched during logout.
      * @return A ResponseEntity indicating success or failure of the "out" log.
      * - HttpStatus.OK if attendance is logged successfully.
      * - HttpStatus.NOT_FOUND if no "in" record found for today.
@@ -93,20 +93,17 @@ public class AttendanceController {
      */
 
     @PostMapping("/outlog")
-    public ResponseEntity<?> outLogAttendance(@RequestParam("latitude") Double latitude,
-                                              @RequestParam("longitude") Double longitude,
-                                              @RequestParam("isFaceMatched") Boolean isFaceMatched) {
+    public ResponseEntity<?> outLogAttendance(@RequestBody OutLogRequest outLogRequest) {
         Employee currentUser = securityUtils.getAuthenticatedUser();
         if (currentUser == null) {
             return geh.handleError("User not authenticated.", HttpStatus.UNAUTHORIZED);
         }
 
-        if (latitude == null || longitude == null || isFaceMatched == null) {
-            return geh.handleError("Latitude, Longitude, and isFaceMatched are required.", HttpStatus.BAD_REQUEST);
-        }
+        double latitude = outLogRequest.getLatitude();
+        double longitude = outLogRequest.getLongitude();
 
         try {
-            Attendance markedAttendance = attendanceService.markOutTime(currentUser, latitude, longitude, isFaceMatched);
+            Attendance markedAttendance = attendanceService.markOutTime(currentUser, latitude, longitude);
 
             if (markedAttendance != null) {
                 Map<String, String> response = new HashMap<>();
