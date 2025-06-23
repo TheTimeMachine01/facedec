@@ -87,55 +87,10 @@ jobs:
           -p 3307:3307 \
           mysql:8.0
           
-         
           echo "Waiting for MySQL to be ready..."
-          MYSQL_READY=false
-          for i in $(seq 1 60); do
-            # Try pinging from inside the MySQL container itself first
-            docker exec test-mysql mysqladmin ping -h localhost --silent 2>/dev/null
-            if [ $? -eq 0 ]; then
-              echo "MySQL is ready inside its container. Now check external reachability."
-              MYSQL_READY=true
-              break
-            fi
-            echo "MySQL not ready yet, waiting... ($i/60)"
-            sleep 1
-          done
-      
-          if [ "$MYSQL_READY" = false ]; then
-            echo "MySQL did not become ready within its container!"
-            echo "Dumping test-mysql container logs (startup issue):"
-            docker logs test-mysql
-            echo "End of test-mysql container logs."
-            exit 1
-          fi
-      
-          # Give MySQL a little more buffer time after initial ping success
-          echo "Giving MySQL an additional 5 seconds to fully initialize connections."
-          sleep 5
-      
-          # Check network connectivity from where facedec-app will run (the host)
-          echo "Testing connectivity to MySQL from the host..."
-          # Use netcat (nc) to check if the port is open and listening
-          # Install netcat if not already present on the runner
-          sudo apt-get update && sudo apt-get install -y netcat || true
-          for i in $(seq 1 10); do
-            if nc -zv localhost 3307; then # Using localhost as MySQL's port is published to host
-              echo "Host can connect to MySQL on port 3307."
-              break
-            else
-              echo "Host cannot connect to MySQL on port 3307, retrying... ($i/10)"
-              sleep 2
-            fi
-            if [ "$i" -eq 10 ]; then
-              echo "Host failed to connect to MySQL after multiple attempts."
-              echo "Dumping test-mysql container logs (connectivity issue):"
-              docker logs test-mysql
-              echo "End of test-mysql container logs."
-              docker inspect test-mysql # Show network config
-              exit 1
-            fi
-          done
+          
+          docker logs -f test-mysql || echo "No logs found (container may not have started)."
+
 
       - name: Spring Boot App on Docker
         run: |
