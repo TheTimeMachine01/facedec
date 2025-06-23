@@ -80,30 +80,41 @@ jobs:
       - name: MySQL on Docker
         run: |
           docker run -d --name test-mysql --network app-network \
-          -e MYSQL_DATABASE=attendance_db \
-          -e MYSQL_USER=user \
-          -e MYSQL_PASSWORD=password \
-          -e MYSQL_ROOT_PASSWORD=rootpassword \
-          -p 3307:3307 \
-          mysql:8.0
+            -e MYSQL_DATABASE=attendance_db \
+            -e MYSQL_USER=user \
+            -e MYSQL_PASSWORD=password \
+            -e MYSQL_ROOT_PASSWORD=rootpassword \
+            -p 3307:3307 \
+            mysql:8.0
           
           echo "Waiting for MySQL to be ready..."
 
-      - name: Print final facedec-app logs
+      - name: Loop until mysqladmin ping succeeds
         if: always()
-        run: docker logs -f test-mysql || echo "No logs found (container may not have started)."
+        run: |
+          # Loop until mysqladmin ping succeeds
+          for i in $(seq 1 60); do
+            docker exec test-mysql mysqladmin ping -hlocalhost --silent && break
+            echo "MySQL not ready yet. Waiting ${i}s..."
+            sleep 1
+          done
+          # If the loop finished without breaking, MySQL didn't become ready
+          docker exec test-mysql mysqladmin ping -hlocalhost --silent || { echo "MySQL did not become ready in time. Exiting."; exit 1; }
+          echo "MySQL is ready. Displaying logs..."
+          # Now that MySQL is ready, dump all logs up to this point and exit
+          docker logs test-mysql
 
       - name: Spring Boot App on Docker
         run: |
           docker run -d --name facedec-app --network app-network \
-          -e SPRING_DATASOURCE_URL="jdbc:mysql://test-mysql:3307/attendance_db" \
-          -e SPRING_DATASOURCE_USERNAME="user" \
-          -e SPRING_DATASOURCE_PASSWORD="password" \
-          -e JWT_SECRET="${{ vars.JWT_SECRET }}" \
-          -e JWT_EXPIRATION_TIME="${{ vars.JWT_EXPIRATION_TIME }}" \
-          -e REFRESH_EXPIRATION_TIME="${{ vars.REFRESH_EXPIRATION_TIME }}" \
-          -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} \
-          ashishv01/facedec:test-build
+            -e SPRING_DATASOURCE_URL="jdbc:mysql://test-mysql:3307/attendance_db" \
+            -e SPRING_DATASOURCE_USERNAME="user" \
+            -e SPRING_DATASOURCE_PASSWORD="password" \
+            -e JWT_SECRET="${{ vars.JWT_SECRET }}" \
+            -e JWT_EXPIRATION_TIME="${{ vars.JWT_EXPIRATION_TIME }}" \
+            -e REFRESH_EXPIRATION_TIME="${{ vars.REFRESH_EXPIRATION_TIME }}" \
+            -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} \
+            ashishv01/facedec:test-build
           
           echo "Waiting for Spring Boot application to start..."
 
