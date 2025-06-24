@@ -247,7 +247,7 @@ jobs:
           # You can find this in your Railway project dashboard, under the service settings.
           #
           # Construct the full URL, replacing the placeholder with the secret value
-          FULL_AVIEN_DATASOURCE_URL=$(echo "${{ env.AVIEN_DATASOURCE_BASE_URL }}" | sed "s|\\${CERT_PASS}|${{ env.AVIEN_DATASOURCE_CERT_PASSWORD }}|g")
+          FULL_AVIEN_DATASOURCE_URL=$(printf '%s' "${{ env.AVIEN_DATASOURCE_BASE_URL }}" | sed "s|\${CERT_PASS}|${{ env.AVIEN_DATASOURCE_CERT_PASSWORD }}|g")
           
           
           railway var set SPRING_DATASOURCE_URL="$FULL_AVIEN_DATASOURCE_URL" --service="${{ env.RAILWAY_SERVICE_ID }}"
