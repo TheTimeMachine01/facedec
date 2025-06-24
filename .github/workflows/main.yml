@@ -241,7 +241,7 @@ jobs:
           npm install -g @railway/cli
           #
           # Login to Railway
-          railway login --token $RAILWAY_TOKEN
+          railway login
           #
           # ============================= Important ================================================
           # Replace <YOUR_SERVICE_ID> with the actual service ID of your Spring Boot application on Railway.
