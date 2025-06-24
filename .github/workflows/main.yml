@@ -129,6 +129,9 @@ jobs:
       - name: Finding the Container
         run: docker ps -a | grep facedec-app && docker logs facedec-app || echo "No facedec-app container found."
 
+      - name: Finding the Container
+        run: docker logs -f facedec-app || echo "No facedec-app container found."
+
       - name: Print final facedec-app logs
         if: always()
         run: |
