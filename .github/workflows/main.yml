@@ -237,6 +237,7 @@ jobs:
           echo "Deploying to Railway..."
           # 
           # Install Railway CLI
+          set -x
           npm install -g @railway/cli
           #
           # Login to Railway
