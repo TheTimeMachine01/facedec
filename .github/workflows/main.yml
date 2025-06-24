@@ -160,7 +160,7 @@ jobs:
             sleep 3
           done
 
-#           Check if the log message was actually found
+          # Check if the log message was actually found
           if [ "$LOG_MESSAGE_FOUND" = "false" ]; then
             echo "ERROR: Application startup log was not found even after the loop." # Should not happen, but a double-check
             exit 1
