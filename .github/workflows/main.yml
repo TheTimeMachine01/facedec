@@ -221,7 +221,7 @@ jobs:
 
       - name: Install Node.js and npm
         run: |
-          apt-get update && apt-get install -y nodejs npm
+          apk update && apk add --no-cache nodejs npm
 
       - name: Deploy to Railway
         if: env.DEPLOY_TARGET == 'railway'
