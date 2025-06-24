@@ -157,10 +157,10 @@ jobs:
             fi
           
             echo "Waiting for log message... (Elapsed time: ${ELAPSED_TIME}s / Timeout: ${TIMEOUT}s)"
-            sleep 3 # Wait for 3 seconds before checking again
+            sleep 3
           done
 
-          # Check if the log message was actually found
+#           Check if the log message was actually found
           if [ "$LOG_MESSAGE_FOUND" = "false" ]; then
             echo "ERROR: Application startup log was not found even after the loop." # Should not happen, but a double-check
             exit 1
@@ -235,19 +235,19 @@ jobs:
           AVIEN_DATASOURCE_CERT_PASSWORD: ${{ secrets.AVIEN_DB_CERT_PASSWORD }} # New secret for cert password
         run: |
           echo "Deploying to Railway..."
-          # 
-          # Install Railway CLI
+#
+#          Install Railway CLI
           set -x
           npm install -g @railway/cli
-          #
-          # Login to Railway
-          railway login
-          #
-          # ============================= Important ================================================
-          # Replace <YOUR_SERVICE_ID> with the actual service ID of your Spring Boot application on Railway.
-          # You can find this in your Railway project dashboard, under the service settings.
-          #
-          # Construct the full URL, replacing the placeholder with the secret value
+#
+#          Login to Railway
+#          railway login
+#
+#           ============================= Important ================================================
+#          Replace <YOUR_SERVICE_ID> with the actual service ID of your Spring Boot application on Railway.
+#          You can find this in your Railway project dashboard, under the service settings.
+#         
+#           Construct the full URL, replacing the placeholder with the secret value
           FULL_AVIEN_DATASOURCE_URL=$(echo "${{ env.AVIEN_DATASOURCE_BASE_URL }}" | sed "s|\\${CERT_PASS}|${{ env.AVIEN_DATASOURCE_CERT_PASSWORD }}|g")
           
           
@@ -275,14 +275,14 @@ jobs:
           MYSQL_DATABASE_URL: ${{ secrets.RENDER_MYSQL_URL }} # Use a specific secret for Render MySQL
         run: |
           echo "Deploying to Render..."
-          #
-          # Render deployments are often triggered via webhooks or Render CLI.
-          # If you have a Render service configured to auto-deploy from Docker Hub, pushing the image
-          # in the previous step might be enough.
-          # To trigger a manual deploy for a service via Render API (if linked to Docker):
-          # You'll need to know your Render service ID.
-          
-          # Install curl if not already present
+#
+#           Render deployments are often triggered via webhooks or Render CLI.
+#           If you have a Render service configured to auto-deploy from Docker Hub, pushing the image
+#           in the previous step might be enough.
+#           To trigger a manual deploy for a service via Render API (if linked to Docker):
+#           You'll need to know your Render service ID.
+#
+#           Install curl if not already present
           sudo apt-get update && sudo apt-get install -y curl
           
           # Trigger Render deploy webhook (replace with your service's deploy hook URL)
