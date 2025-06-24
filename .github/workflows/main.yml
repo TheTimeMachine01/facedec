@@ -219,6 +219,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install Node.js and npm
+        run: |
+          apt-get update && apt-get install -y nodejs npm
+
       - name: Deploy to Railway
         if: env.DEPLOY_TARGET == 'railway'
         env:
