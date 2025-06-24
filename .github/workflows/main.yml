@@ -19,7 +19,7 @@ on:
     avien_db_url:
       description: 'jdbc:mysql://avien-mysql-ashish-6abe.l.aivencloud.com:26622/facedec?useSSL=true&requireSSL=true&sslMode=VERIFY_IDENTITY&trustCertificateKeyStoreUrl=classpath:truststore.jks&trustCertificateKeyStorePassword=${CERT_PASS}'
       type: string
-      required: false
+      required: true
 
 env:
   DOCKER_IMAGE_REPO: ${{ secrets.DOCKER_IMAGE_NAME }}
