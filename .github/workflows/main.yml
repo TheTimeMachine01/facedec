@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       deploy_target:
@@ -18,6 +15,11 @@ on:
           - 'none'
           - 'railway'
           - 'render'
+#    New Inputs
+    avien_db_url:
+      description: 'jdbc:mysql://avien-mysql-ashish-6abe.l.aivencloud.com:26622/facedec?useSSL=true&requireSSL=true&sslMode=VERIFY_IDENTITY&trustCertificateKeyStoreUrl=classpath:truststore.jks&trustCertificateKeyStorePassword=${CERT_PASS}'
+      type: string
+      required: false
 
 env:
   DOCKER_IMAGE_REPO: ${{ secrets.DOCKER_IMAGE_NAME }}
@@ -204,18 +206,29 @@ jobs:
     environment: production
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_target != 'none'
 
+    # Add the Railway CLI container for consistency
+    container: ghcr.io/railwayapp/cli:latest
+
+    env:
+      DEPLOY_TARGET: ${{ github.event.inputs.deploy_target }}
+      # Railway specific variables
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }} # Ensure you created this secret
+      RAILWAY_SERVICE_ID: "d8f2b40a-b9bf-49ae-84d4-2ad5fd3a379f" # <<< REPLACE THIS WITH YOUR ACTUAL SERVICE ID
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set Deploy Target Variable
-        run: echo "DEPLOY_TARGET=${{ github.event.inputs.deploy_target }}" >> $GITHUB_ENV
-
       - name: Deploy to Railway
         if: env.DEPLOY_TARGET == 'railway'
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          MYSQL_DATABASE_URL: ${{ secrets.RAILWAY_MYSQL_URL }} # Use a specific secret for Railway MySQL
+          # Avien Database URL comes from workflow_dispatch input
+          # We'll construct the final URL here, replacing ${CERT_PASS}
+          AVIEN_DATASOURCE_BASE_URL: ${{ github.event.inputs.avien_db_url }}
+          # Avien Database credentials come from GitHub Secrets
+          AVIEN_DATASOURCE_USERNAME: ${{ secrets.AVIEN_DB_USERNAME }}
+          AVIEN_DATASOURCE_PASSWORD: ${{ secrets.AVIEN_DB_PASSWORD }}
+          AVIEN_DATASOURCE_CERT_PASSWORD: ${{ secrets.AVIEN_DB_CERT_PASSWORD }} # New secret for cert password
         run: |
           echo "Deploying to Railway..."
           # 
@@ -225,28 +238,30 @@ jobs:
           # Login to Railway
           railway login --token $RAILWAY_TOKEN
           #
-          # ============================= Instructions ================================================
-          # Set the project and environment (replace with your actual project/environment IDs)
-          # You might need to configure Railway to pick up the Docker image pushed in the previous job.
-          # A common approach is to link your Railway service to your Docker Hub repository.
-          # Alternatively, if Railway supports direct Dockerfile deployment, you'd trigger that here.
-          # For a Docker-based service on Railway, typically you just need to update the service.
-          # Assuming you have a Railway service linked to this GitHub repository or Docker Hub:
-          # You might need to trigger a redeploy on Railway. This often happens automatically on new image pushes
-          # if the service is configured for auto-deploy.
-          # If manual trigger is needed, Railway CLI might have a command like:
-          # railway deploy --service <YOUR_SERVICE_ID> --tag ashishv01/facedec:latest
-          # Or set variables directly if that's how you manage connections
+          # ============================= Important ================================================
+          # Replace <YOUR_SERVICE_ID> with the actual service ID of your Spring Boot application on Railway.
+          # You can find this in your Railway project dashboard, under the service settings.
           #
-          #
-          railway var set SPRING_DATASOURCE_URL="${{ env.MYSQL_DATABASE_URL }}" --service <YOUR_SERVICE_ID>
-          railway var set SPRING_DATASOURCE_USERNAME="${{ secrets.RAILWAY_MYSQL_USERNAME }}" --service <YOUR_SERVICE_ID>
-          railway var set SPRING_DATASOURCE_PASSWORD="${{ secrets.RAILWAY_MYSQL_PASSWORD }}" --service <YOUR_SERVICE_ID>
-          railway var set JWT_SECRET="${{ vars.JWT_SECRET }}" --service <YOUR_SERVICE_ID>
-          railway var set JWT_EXPIRATION_TIME="${{ vars.JWT_EXPIRATION_TIME }}" --service <YOUR_SERVICE_ID>
-          railway var set REFRESH_EXPIRATION_TIME="${{ vars.REFRESH_EXPIRATION_TIME }}" --service <YOUR_SERVICE_ID>
+          # Construct the full URL, replacing the placeholder with the secret value
+          FULL_AVIEN_DATASOURCE_URL=$(echo "${{ env.AVIEN_DATASOURCE_BASE_URL:? }}" | sed "s|\\${CERT_PASS}|${{ env.AVIEN_DATASOURCE_CERT_PASSWORD }}|g")
           
-          echo "Railway deployment initiated. Check Railway dashboard for status."
+          
+          railway var set SPRING_DATASOURCE_URL="$FULL_AVIEN_DATASOURCE_URL" --service="${{ env.RAILWAY_SERVICE_ID }}"
+          railway var set SPRING_DATASOURCE_USERNAME="${{ env.AVIEN_DATASOURCE_USERNAME }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
+          railway var set SPRING_DATASOURCE_PASSWORD="${{ env.AVIEN_DATASOURCE_PASSWORD }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
+          railway var set JWT_SECRET="${{ vars.JWT_SECRET }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
+          railway var set JWT_EXPIRATION_TIME="${{ vars.JWT_EXPIRATION_TIME }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
+          railway var set REFRESH_EXPIRATION_TIME="${{ vars.REFRESH_EXPIRATION_TIME }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
+          
+          # Important: Trigger a redeploy after setting variables
+          # Railway's auto-deploy from Docker Hub often handles new image pushes.
+          # However, setting *new* environment variables often requires a separate redeploy
+          # for the service to pick them up.
+          echo "Triggering a redeploy for service: ${{ env.RAILWAY_SERVICE_ID }}"
+          railway redeploy -s ${{ env.RAILWAY_SERVICE_ID }} # Use the service ID directly
+          
+          echo "Railway deployment and variable update initiated. Check Railway dashboard for status."
+
 
       - name: Deploy to Render
         if: env.DEPLOY_TARGET == 'render'
