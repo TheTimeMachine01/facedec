@@ -64,7 +64,7 @@ jobs:
           echo "Deploying to Railway..."
           set -x
           npm install -g @railway/cli
-          FULL_AVIEN_DATASOURCE_URL=$(printf '%s' "${{ env.AVIEN_DATASOURCE_BASE_URL }}" | sed "s|\${CERT_PASS}|${{ env.AVIEN_DATASOURCE_CERT_PASSWORD }}|g")
+          FULL_AVIEN_DATASOURCE_URL=$(printf '%s' "$AVIEN_DATASOURCE_BASE_URL" | sed "s|\${CERT_PASS}|$AVIEN_DATASOURCE_CERT_PASSWORD|g")
           
           if [ -z "$FULL_AVIEN_DATASOURCE_URL" ]; then
             echo "FULL_AVIEN_DATASOURCE_URL is empty. Please provide a valid avien_db_url input."
