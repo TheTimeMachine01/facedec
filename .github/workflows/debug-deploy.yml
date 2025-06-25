@@ -3,98 +3,28 @@ name: Debug Deploy Only
 on:
   push:
     branches:
-      - main
+      - main  # Change this if needed
   workflow_dispatch:
-    inputs:
-      deploy_target:
-        description: 'Select Platform for deployment (optional)'
-        type: choice
-        required: true
-        default: 'railway' # Changed default to 'render'
-        options:
-          - 'none'
-          - 'railway'
-          - 'render'
-      avien_db_url:
-        description: url
-        default: 'jdbc:mysql://avien-mysql-ashish-6abe.l.aivencloud.com:26622/facedec?useSSL=true&requireSSL=true&sslMode=VERIFY_IDENTITY&trustCertificateKeyStoreUrl=classpath:truststore.jks&trustCertificateKeyStorePassword=${CERT_PASS}'
-        type: string
-        required: false
-      docker_image_tag:
-        description: 'image-tag'
-        default: 'd673fbdd5e6b47784b129add81c2985641b7f890'
-        type: string
-        required: false
-
-env:
-  # No DOCKER_IMAGE_REPO here, as we are not building
-  JAVA_VERSION: '21' # Still good to have for context, though not used in this workflow
-  APP_PORT: 8080
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production
-    if: github.event.inputs.deploy_target != 'none'
-
-    container: ghcr.io/railwayapp/cli:latest # Keep this for Railway
-
-    env:
-      DEPLOY_TARGET: ${{ github.event.inputs.deploy_target }}
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
-      RAILWAY_SERVICE_ID: "d8f2b40a-b9bf-49ae-84d4-2ad5fd3a379f"
-      DOCKER_IMAGE_TO_DEPLOY: ${{ github.event.inputs.docker_image_tag }} # Use the input tag
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repo (if needed)
+      uses: actions/checkout@v3
 
-      - name: Install Node.js and npm
-        run: |
-          apk update && apk add --no-cache nodejs npm
+    - name: Set up Railway CLI
+      run: |
+        curl -fsSL https://railway.app/install.sh | sh
+        echo "$HOME/.railway/bin" >> $GITHUB_PATH
 
-      - name: Deploy to Railway
-        if: env.DEPLOY_TARGET == 'railway'
-        env:
-          AVIEN_DATASOURCE_BASE_URL: ${{ github.event.inputs.avien_db_url }}
-          AVIEN_DATASOURCE_USERNAME: ${{ secrets.AVIEN_DB_USERNAME }}
-          AVIEN_DATASOURCE_PASSWORD: ${{ secrets.AVIEN_DB_PASSWORD }}
-          AVIEN_DATASOURCE_CERT_PASSWORD: ${{ secrets.AVIEN_DB_CERT_PASSWORD }}
-        run: |
-          echo "Deploying to Railway..."
-          set -x
-          npm install -g @railway/cli
-          FULL_AVIEN_DATASOURCE_URL=$(printf '%s' "$AVIEN_DATASOURCE_BASE_URL" | sed "s|\${CERT_PASS}|$AVIEN_DATASOURCE_CERT_PASSWORD|g")
-          
-          if [ -z "$FULL_AVIEN_DATASOURCE_URL" ]; then
-            echo "FULL_AVIEN_DATASOURCE_URL is empty. Please provide a valid avien_db_url input."
-            exit 1
-          fi
-          
-          railway var set SPRING_DATASOURCE_URL="$FULL_AVIEN_DATASOURCE_URL" --service="${{ env.RAILWAY_SERVICE_ID }}"
-          railway var set SPRING_DATASOURCE_USERNAME="${{ env.AVIEN_DATASOURCE_USERNAME }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
-          railway var set SPRING_DATASOURCE_PASSWORD="${{ env.AVIEN_DATASOURCE_PASSWORD }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
-          railway var set JWT_SECRET="${{ vars.JWT_SECRET }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
-          railway var set JWT_EXPIRATION_TIME="${{ vars.JWT_EXPIRATION_TIME }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
-          railway var set REFRESH_EXPIRATION_TIME="${{ vars.REFRESH_EXPIRATION_TIME }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
-          
-          echo "Triggering a redeploy for service: ${{ env.RAILWAY_SERVICE_ID }}. Railway will pull the latest image or the image specified in its config."
-          railway redeploy -s ${{ env.RAILWAY_SERVICE_ID }}
+    - name: Authenticate with Railway
+      run: railway login --token ${{ secrets.RAILWAY_API_TOKEN }}
 
-          echo "Railway deployment and variable update initiated. Check Railway dashboard for status."
+    - name: Create Dockerfile from Docker Hub image
+      run: |
+        echo "FROM ashishv01/facedec:latest" > Dockerfile
 
-      - name: Deploy to Render
-        if: env.DEPLOY_TARGET == 'render'
-        env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-          MYSQL_DATABASE_URL: ${{ secrets.RENDER_MYSQL_URL }}
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        run: |
-          echo "Deploying to Render..."
-          # Install curl if not already present (should be on ubuntu-latest, but good safeguard)
-          sudo apt-get update && sudo apt-get install -y curl
-          
-          echo "Triggering Render deploy webhook for image: ${{ env.DOCKER_IMAGE_TO_DEPLOY }}"
-          curl -X POST "${{ env.RENDER_DEPLOY_HOOK_URL }}"
-          
-          echo "Render deployment initiated. Check Render dashboard for status."
+    - name: Deploy to Railway
+      run: railway up --service d8f2b40a-b9bf-49ae-84d4-2ad5fd3a379f
