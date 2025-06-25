@@ -10,7 +10,7 @@ on:
         description: 'Select Platform for deployment (optional)'
         type: choice
         required: true
-        default: 'render' # Changed default to 'render'
+        default: 'railway' # Changed default to 'render'
         options:
           - 'none'
           - 'railway'
