@@ -9,12 +9,13 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
     container:
       image: ghcr.io/railwayapp/cli:latest
       env:
         SVC_ID: d8f2b40a-b9bf-49ae-84d4-2ad5fd3a379f
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
-    environment: production
+        RAILWAY_TOKEN: 6705877b-6e15-4b15-af64-1c50176cbc98
+
 
     steps:
       - name: Create Dockerfile from Docker Hub image
