@@ -249,6 +249,11 @@ jobs:
           # Construct the full URL, replacing the placeholder with the secret value
           FULL_AVIEN_DATASOURCE_URL=$(printf '%s' "${{ env.AVIEN_DATASOURCE_BASE_URL }}" | sed "s|\${CERT_PASS}|${{ env.AVIEN_DATASOURCE_CERT_PASSWORD }}|g")
           
+          if [ -z "$FULL_AVIEN_DATASOURCE_URL" ]; then
+            echo "FULL_AVIEN_DATASOURCE_URL is empty. Please provide a valid avien_db_url input."
+            exit 1
+          fi
+          
           
           railway var set SPRING_DATASOURCE_URL="$FULL_AVIEN_DATASOURCE_URL" --service="${{ env.RAILWAY_SERVICE_ID }}"
           railway var set SPRING_DATASOURCE_USERNAME="${{ env.AVIEN_DATASOURCE_USERNAME }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
