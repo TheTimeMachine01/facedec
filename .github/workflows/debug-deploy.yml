@@ -1,6 +1,9 @@
 name: Debug Deploy Only
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       deploy_target:
