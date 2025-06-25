@@ -16,13 +16,15 @@ on:
           - 'railway'
           - 'render'
       avien_db_url:
-        description: 'jdbc:mysql://avien-mysql-ashish-6abe.l.aivencloud.com:26622/facedec?useSSL=true&requireSSL=true&sslMode=VERIFY_IDENTITY&trustCertificateKeyStoreUrl=classpath:truststore.jks&trustCertificateKeyStorePassword=${CERT_PASS}'
+        description: url
+        default: 'jdbc:mysql://avien-mysql-ashish-6abe.l.aivencloud.com:26622/facedec?useSSL=true&requireSSL=true&sslMode=VERIFY_IDENTITY&trustCertificateKeyStoreUrl=classpath:truststore.jks&trustCertificateKeyStorePassword=${CERT_PASS}'
         type: string
-        required: true
+        required: false
       docker_image_tag:
-        description: 'd673fbdd5e6b47784b129add81c2985641b7f890'
+        description: 'image-tag'
+        default: 'd673fbdd5e6b47784b129add81c2985641b7f890'
         type: string
-        required: true
+        required: false
 
 env:
   # No DOCKER_IMAGE_REPO here, as we are not building
