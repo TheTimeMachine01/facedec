@@ -21,7 +21,7 @@ jobs:
 
     - name: Is token available
       run: |
-        if [ $RAILWAY_TOKEN != null ]; then 
+        if [ -n "$RAILWAY_TOKEN" ]; then 
           echo "Token is there";
         else 
           echo "Token not found";
