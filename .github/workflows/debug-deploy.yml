@@ -9,19 +9,20 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
+    env:
+      SVC_ID: my-service
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
     steps:
-    - name: Checkout repo (if needed)
-      uses: actions/checkout@v3
-
-    - name: Set up Railway CLI
-      run: |
-        curl -fsSL https://railway.app/install.sh | sh
-        echo "$HOME/.railway/bin" >> $GITHUB_PATH
-
     - name: Create Dockerfile from Docker Hub image
       run: |
         echo "FROM ashishv01/facedec:latest" > Dockerfile
+
+    - name: Checking repo
+      run: |
+        ls -al
+        cat Dockerfile
 
     - name: Deploy to Railway
       env:
