@@ -48,9 +48,6 @@ jobs:
         run: |
           apk update && apk add --no-cache nodejs npm
 
-      - name: Debug: Print Docker Image Tag to be deployed
-        run: echo "Attempting to deploy image: ${{ env.DOCKER_IMAGE_TO_DEPLOY }}"
-
       - name: Deploy to Railway
         if: env.DEPLOY_TARGET == 'railway'
         env:
