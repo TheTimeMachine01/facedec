@@ -1,22 +1,8 @@
 name: Docker Build, Test, and Conditional Deploy
 
 on:
-  workflow_dispatch:
-    inputs:
-      deploy_target:
-        description: 'Select Platform for deployment (optional)'
-        type: choice
-        required: true
-        default: 'none'
-        options:
-          - 'none'
-          - 'railway'
-          - 'render'
-#    New Inputs
-    avien_db_url:
-      description: 'jdbc:mysql://avien-mysql-ashish-6abe.l.aivencloud.com:26622/facedec?useSSL=true&requireSSL=true&sslMode=VERIFY_IDENTITY&trustCertificateKeyStoreUrl=classpath:truststore.jks&trustCertificateKeyStorePassword=${CERT_PASS}'
-      type: string
-      required: true
+  push:
+    branches:
 
 env:
   DOCKER_IMAGE_REPO: ${{ secrets.DOCKER_IMAGE_NAME }}
@@ -201,110 +187,15 @@ jobs:
     needs: build-test-and-push-docker
     runs-on: ubuntu-latest
     environment: production
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_target != 'none'
-
-    # Add the Railway CLI container for consistency
-    container: ghcr.io/railwayapp/cli:latest
-
-    env:
-      DEPLOY_TARGET: ${{ github.event.inputs.deploy_target }}
-      # Railway specific variables
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }} # Ensure you created this secret
-      RAILWAY_SERVICE_ID: "d8f2b40a-b9bf-49ae-84d4-2ad5fd3a379f" # <<< REPLACE THIS WITH YOUR ACTUAL SERVICE ID
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Node.js and npm
-        run: |
-          apk update && apk add --no-cache nodejs npm
-
-      - name: Deploy to Railway
-        if: env.DEPLOY_TARGET == 'railway'
+      - name: Trigger Render Deploy
         env:
-          # Avien Database URL comes from workflow_dispatch input
-          # We'll construct the final URL here, replacing ${CERT_PASS}
-          AVIEN_DATASOURCE_BASE_URL: ${{ github.event.inputs.avien_db_url }}
-          # Avien Database credentials come from GitHub Secrets
-          AVIEN_DATASOURCE_USERNAME: ${{ secrets.AVIEN_DB_USERNAME }}
-          AVIEN_DATASOURCE_PASSWORD: ${{ secrets.AVIEN_DB_PASSWORD }}
-          AVIEN_DATASOURCE_CERT_PASSWORD: ${{ secrets.AVIEN_DB_CERT_PASSWORD }} # New secret for cert password
-        run: |
-          echo "Deploying to Railway..."
-          # 
-          # Install Railway CLI
-          set -x
-          npm install -g @railway/cli
-          #
-          # Login to Railway
-          #
-          # ============================= Important ================================================
-          # Replace <YOUR_SERVICE_ID> with the actual service ID of your Spring Boot application on Railway.
-          # You can find this in your Railway project dashboard, under the service settings.
-          #
-          # Construct the full URL, replacing the placeholder with the secret value
-          FULL_AVIEN_DATASOURCE_URL=$(printf '%s' "${{ env.AVIEN_DATASOURCE_BASE_URL }}" | sed "s|\${CERT_PASS}|${{ env.AVIEN_DATASOURCE_CERT_PASSWORD }}|g")
-          
-          if [ -z "$FULL_AVIEN_DATASOURCE_URL" ]; then
-            echo "FULL_AVIEN_DATASOURCE_URL is empty. Please provide a valid avien_db_url input."
-            exit 1
-          fi
-          
-          
-          railway var set SPRING_DATASOURCE_URL="$FULL_AVIEN_DATASOURCE_URL" --service="${{ env.RAILWAY_SERVICE_ID }}"
-          railway var set SPRING_DATASOURCE_USERNAME="${{ env.AVIEN_DATASOURCE_USERNAME }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
-          railway var set SPRING_DATASOURCE_PASSWORD="${{ env.AVIEN_DATASOURCE_PASSWORD }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
-          railway var set JWT_SECRET="${{ vars.JWT_SECRET }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
-          railway var set JWT_EXPIRATION_TIME="${{ vars.JWT_EXPIRATION_TIME }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
-          railway var set REFRESH_EXPIRATION_TIME="${{ vars.REFRESH_EXPIRATION_TIME }}" --service="${{ env.RAILWAY_SERVICE_ID }}"
-          
-          # Important: Trigger a redeploy after setting variables
-          # Railway's auto-deploy from Docker Hub often handles new image pushes.
-          # However, setting *new* environment variables often requires a separate redeploy
-          # for the service to pick them up.
-          echo "Triggering a redeploy for service: ${{ env.RAILWAY_SERVICE_ID }}"
-          railway redeploy -s ${{ env.RAILWAY_SERVICE_ID }} # Use the service ID directly
-          
-          echo "Railway deployment and variable update initiated. Check Railway dashboard for status."
-
-
-      - name: Deploy to Render
-        if: env.DEPLOY_TARGET == 'render'
-        env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-          MYSQL_DATABASE_URL: ${{ secrets.RENDER_MYSQL_URL }} # Use a specific secret for Render MySQL
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
           echo "Deploying to Render..."
-          #
-          # Render deployments are often triggered via webhooks or Render CLI.
-          # If you have a Render service configured to auto-deploy from Docker Hub, pushing the image
-          # in the previous step might be enough.
-          # To trigger a manual deploy for a service via Render API (if linked to Docker):
-          # You'll need to know your Render service ID.
-          
-          # Install curl if not already present
-          sudo apt-get update && sudo apt-get install -y curl
-          
-          # Trigger Render deploy webhook (replace with your service's deploy hook URL)
-          # You would typically find this in your Render service settings.
-          # This example assumes you have a Render service connected to your Docker Hub.
-          # The deploy hook would then pull the latest image.
-          # For setting environment variables, Render usually has its own UI or API.
-          # If you need to set them via API, it would involve more complex API calls.
-          # For now, let's assume variables are managed in Render's UI or are picked up from a .env file if supported.
-          
-          # Example of triggering a deploy using a webhook (replace with your actual deploy hook URL)
-          # Render's API often requires specific headers and JSON payloads for setting env vars,
-          # which is more complex than a simple curl. It's usually managed in their dashboard.
-          # If you want to trigger a deploy, you might have a "Deploy Hook" URL in your Render service settings.
-          # curl -X POST YOUR_RENDER_DEPLOY_HOOK_URL
-          
-          echo "Render deployment initiated. Check Render dashboard for status."
-          echo "Remember to set MySQL connection details and other environment variables directly in Render's dashboard for your service."
-          echo "SPRING_DATASOURCE_URL: ${{ env.MYSQL_DATABASE_URL }}"
-          echo "SPRING_DATASOURCE_USERNAME: ${{ secrets.RENDER_MYSQL_USERNAME }}"
-          echo "SPRING_DATASOURCE_PASSWORD: ${{ secrets.RENDER_MYSQL_PASSWORD }}"
-          echo "JWT_SECRET: ${{ vars.JWT_SECRET }}"
-          echo "JWT_EXPIRATION_TIME: ${{ vars.JWT_EXPIRATION_TIME }}"
-          echo "REFRESH_EXPIRATION_TIME: ${{ vars.REFRESH_EXPIRATION_TIME }}"
+          curl "$RENDER_DEPLOY_HOOK_URL"

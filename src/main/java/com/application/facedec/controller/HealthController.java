@@ -20,7 +20,7 @@ public class HealthController {
 
     @GetMapping("/health")
     public String healthCheck() {
-        return "Application is running!: "+ System.getProperty("java.library.path");
+        return "Application is running!: ";
     }
 
     @GetMapping("/lib")
