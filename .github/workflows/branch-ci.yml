@@ -6,6 +6,10 @@ on:
       - '*'     # Trigger on any branch
       - '!main' # Exclude the main branch
 
+env:
+  JAVA_VERSION: '21'
+  APP_PORT: 8080
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
