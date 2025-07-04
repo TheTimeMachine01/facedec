@@ -1,0 +1,164 @@
+name: PR Validation check
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+env:
+  DOCKER_IMAGE_REPO: ${{ secrets.DOCKER_IMAGE_NAME }}
+  JAVA_VERSION: '21'
+  APP_PORT: 8080
+
+jobs:
+  Pr_Validation_Test:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build Spring Boot JAR with Maven (Skipping Unit Tests)
+        run: mvn -B package -DskipTests --file pom.xml
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker Image
+        id: docker_build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          push: false
+          tags: DOCKER_IMAGE_REPO:test-build
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create Docker network
+        run: docker network create app-network || true
+
+      - name: MySQL on Docker
+        run: |
+          docker run -d --name test-mysql --network app-network \
+            -e MYSQL_DATABASE=attendance_db \
+            -e MYSQL_USER=user \
+            -e MYSQL_PASSWORD=password \
+            -e MYSQL_ROOT_PASSWORD=rootpassword \
+            -p 3306:3306 \
+            mysql:8.0
+          
+          echo "Waiting for MySQL to be ready..."
+
+      - name: Loop until mysqladmin ping succeeds
+        if: always()
+        run: |
+          # Loop until mysqladmin ping succeeds
+          for i in $(seq 1 60); do
+            docker exec test-mysql mysqladmin ping -hlocalhost --silent && break
+            echo "MySQL not ready yet. Waiting ${i}s..."
+            sleep 1
+          done
+          # If the loop finished without breaking, MySQL didn't become ready
+          docker exec test-mysql mysqladmin ping -hlocalhost --silent || { echo "MySQL did not become ready in time. Exiting."; exit 1; }
+          echo "MySQL is ready. Displaying logs..."
+          # Now that MySQL is ready, dump all logs up to this point and exit
+          docker logs test-mysql
+
+      - name: Spring Boot App on Docker
+        run: |
+          docker run -d --name facedec-app --network app-network \
+            -e SPRING_DATASOURCE_URL="jdbc:mysql://test-mysql:3306/attendance_db" \
+            -e SPRING_DATASOURCE_USERNAME="user" \
+            -e SPRING_DATASOURCE_PASSWORD="password" \
+            -e JWT_SECRET="${{ vars.JWT_SECRET }}" \
+            -e JWT_EXPIRATION_TIME="${{ vars.JWT_EXPIRATION_TIME }}" \
+            -e REFRESH_EXPIRATION_TIME="${{ vars.REFRESH_EXPIRATION_TIME }}" \
+            -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} \
+            ashishv01/facedec:test-build
+          
+          echo "Waiting for Spring Boot application to start..."
+
+      - name: Finding the Container
+        run: docker ps -a | grep facedec-app && docker logs facedec-app || echo "No facedec-app container found."
+
+      - name: Print final facedec-app logs
+        if: always()
+        run: |
+          echo "Waiting for Spring Boot application to start..."
+
+          # --- Part 1: Wait for log message with explicit loop and timeout ---
+          START_TIME=$(date +%s) # Get current timestamp in seconds
+          TIMEOUT=120           # Timeout in seconds
+          LOG_MESSAGE_FOUND=false
+
+          while true; do
+            # Check if timeout has been reached
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+            if [ "$ELAPSED_TIME" -ge "$TIMEOUT" ]; then
+              echo "ERROR: Application startup log not found within ${TIMEOUT} seconds."
+              docker logs facedec-app --tail 20 || true # Print last 20 lines for debugging
+              exit 1 # Fail the step
+            fi
+          
+            # Check for the log message
+            if docker logs facedec-app | grep -q "Started FacedecApplication"; then
+              echo "Spring Boot application log message 'Started FacedecApplication' found."
+              LOG_MESSAGE_FOUND=true
+              break # Exit the loop
+            fi
+          
+            echo "Waiting for log message... (Elapsed time: ${ELAPSED_TIME}s / Timeout: ${TIMEOUT}s)"
+            sleep 3 # Wait for 3 seconds before checking again
+          done
+
+          # Check if the log message was actually found
+          if [ "$LOG_MESSAGE_FOUND" = "false" ]; then
+            echo "ERROR: Application startup log was not found even after the loop." # Should not happen, but a double-check
+            exit 1
+          fi
+
+
+      - name: Installing Curl
+        run: |
+          # Install curl if not already present (should be on ubuntu-latest, but good safeguard)
+          sudo apt-get update && sudo apt-get install -y curl
+
+      - name: Run Basic Integration Tests
+        run: |
+          echo "Performing basic operations on the running application..."
+          APP_BASE_URL="http://localhost:${{ env.APP_PORT }}"
+          curl -s $APP_BASE_URL/health | grep 'Application is running' || { echo "Health check failed!"; exit 1; }
+          echo "Health check passed."
+          echo "Attempting to create a new user..."
+
+      - name: Clean up Docker containers
+        if: always()
+        run: |
+          echo "Cleaning up Docker containers and network..."
+          docker stop test-mysql facedec-app || true
+          docker rm test-mysql facedec-app || true
+          docker network rm app-network || true
