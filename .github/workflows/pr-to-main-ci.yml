@@ -53,7 +53,7 @@ jobs:
           file: ./Dockerfile
           load: true
           push: false
-          tags: DOCKER_IMAGE_REPO:test-build
+          tags: ${{ secrets.DOCKER_IMAGE_NAME }}:test-build
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
