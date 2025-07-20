@@ -41,3 +41,11 @@ jwt:
   secret: ${JWT_SECRET}
   expiration-time: ${JWT_EXPIRATION_TIME}
   refresh-expiration-time: ${REFRESH_EXPIRATION_TIME}
+
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: "health,mappings"
