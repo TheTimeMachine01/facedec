@@ -8,6 +8,11 @@ spring:
     allow-circular-references: true
     allow-bean-definition-overriding: true
 
+  servlet:
+    multipart:
+      max-file-size: 3MB
+      max-request-size: 3MB
+
   datasource:
 #    =======>> Avien Server Credentials <<=======
 #    url:  jdbc:mysql://avien-mysql-ashish-6abe.l.aivencloud.com:26622/facedec?useSSL=true&requireSSL=true&sslMode=VERIFY_IDENTITY&trustCertificateKeyStoreUrl=classpath:truststore.jks&trustCertificateKeyStorePassword=${CERT_PASS}
