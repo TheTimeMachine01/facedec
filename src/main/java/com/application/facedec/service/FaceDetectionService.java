@@ -15,8 +15,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +45,23 @@ public class FaceDetectionService {
             throw new RuntimeException("Face data already available for this user.");
         }
 
-        File cascadeFile = new ClassPathResource(HAAR_CASCADE_FILE).getFile();
-        System.out.println(STR."Attempting to load Haar Cascade from absolute path: \{cascadeFile.getAbsolutePath()}");
-        CascadeClassifier faceDetector = new CascadeClassifier(cascadeFile.getAbsolutePath());
+        InputStream cascadeStream = new ClassPathResource(HAAR_CASCADE_FILE).getInputStream();
+
+//        File cascadeFile = new ClassPathResource(HAAR_CASCADE_FILE).getFile();
+        File cascadeTempFile = File.createTempFile("haarcascade_", ".xml");
+        cascadeTempFile.deleteOnExit(); // Ensure the temporary file is deleted on exit
+
+        Files.copy(cascadeStream, cascadeTempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        cascadeStream.close();
+
+        System.out.println("Haar Cascade loaded from temporary file: " + cascadeTempFile.getAbsolutePath());
+
+//        System.out.println(STR."Attempting to load Haar Cascade from absolute path: \{cascadeFile.getAbsolutePath()}");
+
+//        CascadeClassifier faceDetector = new CascadeClassifier(cascadeFile.getAbsolutePath());
+
+        // Load the CascadeClassifier using the path of the temporary file
+        CascadeClassifier faceDetector = new CascadeClassifier(cascadeTempFile.getAbsolutePath());
 
         if (faceDetector.empty()) System.out.println("Face detector is empty"); else System.out.println("Face detector is loaded");
 
@@ -87,6 +103,9 @@ public class FaceDetectionService {
 
             image.release();
             grayImage.release();
+
+            // Don't forget to release the cascade detector
+            faceDetector.empty();
 
             return faces;
         } catch (Exception e) {
