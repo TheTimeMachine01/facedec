@@ -35,6 +35,8 @@ public class SecurityConfig{
         http
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for stateless JWT auth
                 .authorizeHttpRequests((auth) -> {
+                    auth.requestMatchers("/", "/index.html", "/favicon.ico").permitAll();
+                    auth.requestMatchers("/assets/**", "/public/**").permitAll();
                     auth.requestMatchers("/api/auth/**").permitAll(); // Allow authentication endpoints
                     auth.requestMatchers("/health").permitAll();
                     auth.requestMatchers("/actuator/**").permitAll();
