@@ -1,7 +1,7 @@
 package com.application.facedec.config;
 
-import com.application.facedec.entity.Employee;
-import com.application.facedec.repository.UserRepository;
+import com.application.facedec.entity.User.Employee;
+import com.application.facedec.repository.User.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

@@ -2,7 +2,8 @@ package com.application.facedec.controller.User;
 
 import com.application.facedec.config.SecurityUtils;
 import com.application.facedec.dto.User.CurrentUser;
-import com.application.facedec.entity.Employee;
+import com.application.facedec.dto.User.ExploreUser;
+import com.application.facedec.entity.User.Employee;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,4 +29,15 @@ public class OperationController {
 
         return new ResponseEntity<>(currentUser, HttpStatus.OK);
     }
+
+    @GetMapping("/detailedMe")
+    public ResponseEntity<ExploreUser> detailedCurrentAuthenticateUser() {
+
+        Employee authenticatedUser = securityUtils.getAuthenticatedUser();
+
+        ExploreUser exploreUser = new ExploreUser();
+        exploreUser.setId(authenticatedUser.getId());
+
+        return new ResponseEntity<>(exploreUser, HttpStatus.OK);
+    };
 }

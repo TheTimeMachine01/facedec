@@ -1,8 +1,8 @@
 package com.application.facedec.controller.Auth;
 
 import com.application.facedec.dto.RegistrationRequest;
-import com.application.facedec.entity.Employee;
-import com.application.facedec.service.UserService;
+import com.application.facedec.entity.User.Employee;
+import com.application.facedec.service.User.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

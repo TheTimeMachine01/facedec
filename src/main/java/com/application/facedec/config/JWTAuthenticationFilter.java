@@ -1,5 +1,6 @@
 package com.application.facedec.config;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -37,7 +38,6 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         try {
-
             // Get JWT token from HTTP request
             String token = getTokenFromRequest(request);
 
@@ -45,9 +45,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             if(StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)){
                 // get username from token
                 String username = jwtTokenProvider.getUsername(token);
-
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,
@@ -55,12 +53,18 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                 );
 
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
 
-        } catch (SignatureException ex) {
-            throw ex;
+        } catch (ExpiredJwtException ex) {
+            // Log the exception for debugging
+            System.err.println(STR."JWT token expired: \{ex.getMessage()}");
+            // Set an attribute on the request to signal the expiry
+            request.setAttribute("exception", ex);
+        } catch (Exception ex) {
+            // For other JWT-related exceptions
+            System.err.println(STR."JWT token validation failed: \{ex.getMessage()}");
+            request.setAttribute("exception", ex);
         }
 
 

@@ -1,10 +1,11 @@
 package com.application.facedec.controller.Face;
 
 import com.application.facedec.config.SecurityUtils;
-import com.application.facedec.entity.Employee;
+import com.application.facedec.dto.Attendance.InLogResponse;
+import com.application.facedec.entity.User.Employee;
 import com.application.facedec.exceptions.GlobalExceptionHandler;
-import com.application.facedec.repository.FaceDetectionRepository;
-import com.application.facedec.service.FaceDetectionService;
+import com.application.facedec.repository.Face.FaceDetectionRepository;
+import com.application.facedec.service.Face.FaceDetectionService;
 import org.opencv.core.Rect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -41,8 +42,7 @@ public class FaceDetectionController {
         System.out.println(userId);
 
         if (faceDetectionRepository.existsByUserId(userId)) {
-//            return ResponseEntity.status(HttpStatus.CONFLICT).body("Face data already available for this user.");
-            return geh.handleError("Face data already available for this user", HttpStatus.CONFLICT);
+            return geh.handleError("Face data already available for this user",false, HttpStatus.CONFLICT);
         }
 
         try {
@@ -55,29 +55,33 @@ public class FaceDetectionController {
     }
 
     @PostMapping("/match")
-    public ResponseEntity<?> matchFace(@RequestParam("detectedFace") MultipartFile detectedFace, @RequestParam("userId") Long userId) {
+    public ResponseEntity<InLogResponse> matchFace(@RequestParam("detectedFace") MultipartFile detectedFace, @RequestParam("userId") Long userId) {
+
+        InLogResponse inLogResponse = new InLogResponse();
+
         try {
+
             String tempDir = System.getProperty("java.io.tmpdir");
             String tempFilePath = tempDir + java.io.File.separator + detectedFace.getOriginalFilename();
             java.nio.file.Files.write(java.nio.file.Paths.get(tempFilePath), detectedFace.getBytes());
             System.out.println(STR."The Temp path is : \{tempFilePath}");
 
-            boolean matched = faceDetectionService.matchFace(tempFilePath, userId);
-            java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(tempFilePath));
 
-            // Returning JSON format response
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", STR."\{matched}");
+            InLogResponse response = faceDetectionService.matchFace(tempFilePath, userId);
+            java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(tempFilePath));
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
 
+            inLogResponse.setStatus(false);
+            inLogResponse.setFcsScore(0);
+
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("status", false);
             errorResponse.put("error", "Error processing image.");
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(inLogResponse);
         }
     }
 }

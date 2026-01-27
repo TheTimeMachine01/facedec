@@ -6,5 +6,6 @@ import lombok.Data;
 public class InLogRequest {
     private double latitude;
     private double longitude;
-    private boolean isFaceMatched;
+    private long fcss;
+    private int isFaceMatched;
 }

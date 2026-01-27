@@ -84,18 +84,23 @@ public class JwtTokenProvider {
                     .build()
                     .parse(token);
             return true;
+        } catch (ExpiredJwtException ex) {
+            // Log it for debugging, but RE-THROW it so it can be handled
+            System.err.println(STR."Expired JWT token: \{ex.getMessage()}");
+            throw ex; // This is the crucial line
         } catch (SignatureException ex) {
+            System.err.println(STR."Invalid JWT signature: \{ex.getMessage()}");
             throw ex;
         } catch (MalformedJwtException ex) {
             System.err.println(STR."Invalid JWT token: \{ex.getMessage()}");
-        } catch (ExpiredJwtException ex) {
-            System.err.println(STR."Expired JWT token: \{ex.getMessage()}");
+            throw ex;
         } catch (UnsupportedJwtException ex) {
             System.err.println(STR."Unsupported JWT token: \{ex.getMessage()}");
+            throw ex;
         } catch (IllegalArgumentException ex) {
             System.err.println(STR."JWT claims string is empty: \{ex.getMessage()}");
+            throw ex;
         }
-        return false;
     }
 
 }

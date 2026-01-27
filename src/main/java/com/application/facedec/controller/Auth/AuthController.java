@@ -3,7 +3,7 @@ package com.application.facedec.controller.Auth;
 import com.application.facedec.dto.LoginRequest;
 import com.application.facedec.dto.LoginResponse;
 import com.application.facedec.dto.RefreshTokenRequest;
-import com.application.facedec.service.AuthService;
+import com.application.facedec.service.Auth.AuthService;
 import jakarta.security.auth.message.AuthException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,9 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.naming.AuthenticationException;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")

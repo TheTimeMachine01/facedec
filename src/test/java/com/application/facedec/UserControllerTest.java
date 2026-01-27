@@ -2,13 +2,13 @@
 //
 //import com.application.facedec.dto.LoginRequest;
 //import com.application.facedec.dto.LoginResponse;
-//import com.application.facedec.entity.Role;
+//import com.application.facedec.entity.User.Role;
 //import com.application.facedec.entity.RoleName;
-//import com.application.facedec.entity.Employee;
-//import com.application.facedec.repository.RoleRepository;
-//import com.application.facedec.repository.UserRepository;
+//import com.application.facedec.entity.User.Employee;
+//import com.application.facedec.repository.User.RoleRepository;
+//import com.application.facedec.repository.User.UserRepository;
 //import com.application.facedec.service.JWTService;
-//import com.application.facedec.service.UserService;
+//import com.application.facedec.service.User.UserService;
 //import org.junit.Test;
 //import org.mockito.Mock;
 //import org.springframework.beans.factory.annotation.Autowired;
