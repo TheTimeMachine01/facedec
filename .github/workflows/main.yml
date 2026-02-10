@@ -57,6 +57,8 @@ jobs:
           load: true
           push: false
           tags: ${{ secrets.DOCKER_IMAGE_NAME }}:test-build
+          build-args: |
+            BASE_IMAGE=ghcr.io/thetimemachine01/opencv-base-image:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -188,6 +190,8 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_IMAGE_NAME }}:latest
             ${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.DATE_TAG }}_${{ env.BUILD_NUMBER_TAG }}_${{ github.sha }}
+          build-args: |
+            BASE_IMAGE=ghcr.io/thetimemachine01/opencv-base-image:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
