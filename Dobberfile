@@ -184,8 +184,8 @@ COPY --from=jar_build /app/target/*.jar facedec.jar
 # Copy only the compiled OpenCV artifacts from the second stage
 # Note: AWS Lambda looks for libs in /var/task/lib
 RUN mkdir -p /var/task/lib
-COPY --from=opencv_builder /usr/local/share/java/opencv4/${ACTUAL_OPENCV_JAR_NAME} /var/task/
-COPY --from=opencv_builder /usr/local/share/java/opencv4/${ACTUAL_OPENCV_LIB_NAME} /var/task/lib/
+COPY --from=opencv_builder /usr/local/share/java/opencv4/*.jar /var/task/
+COPY --from=opencv_builder /usr/local/share/java/opencv4/*.so /var/task/lib/
 
 # Set AWS-specific environment variables for better startup
 ENV JAVA_OPTS="-Djava.library.path=/var/task/lib -XX:TieredStopAtLevel=1"

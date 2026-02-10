@@ -3,12 +3,13 @@ WORKDIR /app
 COPY . .
 RUN mvn clean package -DskipTests
 
+# Extract the JAR
+RUN java -Djarmode=layertools -jar target/*.jar extract
+
 FROM ubuntu:22.04 AS opencv_builder
 
 ENV OPENCV_VERSION=4.9.0
 ENV INSTALL_DIR=/usr/local
-
-ENV ACTUAL_OPENCV_JAR_NAME="opencv-490.jar"
 
 # Install only what's needed for compilation
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -17,10 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libv4l-dev libtbb-dev libatlas-base-dev \
     && rm -rf /var/lib/apt/lists/*
 
-
 # Download, extract, and copy OpenCV Java bindings
 WORKDIR /opt/opencv_build
-
 
 RUN git clone https://github.com/opencv/opencv.git -b ${OPENCV_VERSION} --depth 1
 
@@ -31,24 +30,29 @@ RUN cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
     -D BUILD_EXAMPLES=OFF -D BUILD_TESTS=OFF -D BUILD_PERF_TESTS=OFF ../ \
     && make -j$(nproc) && make install
 
-# Optimized Runtime Stage for Docker Hub
-FROM ubuntu:22.04
+# AWS Lambda Runtime
+FROM public.ecr.aws/lambda/java:21
 
-WORKDIR /app
+WORKDIR /var/task
 
-# Install only the necessary shared libraries for OpenCV
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libjpeg8 libpng16-16 libtiff5 libavcodec58 libavformat58 libswscale5 \
-    libtbb2 libatlas3-base libv4l-0 \
-    && rm -rf /var/lib/apt/lists/*
+# Runtime optimization: Install only shared libraries (no -dev versions)
+RUN microdnf update -y && microdnf install -y \
+    libjpeg-turbo libpng libtiff mesa-libGL tbb \
+    && microdnf clean all
 
-# Copy artifacts from previous stages
-COPY --from=jar_build /app/target/*.jar app.jar
-RUN mkdir -p /app/lib
-COPY --from=opencv_builder /usr/local/share/java/opencv4/*.so /app/lib/
+# Copy compiled OpenCV artifacts
+RUN mkdir -p /var/task/lib
+COPY --from=opencv_builder /usr/local/share/java/opencv4/*.jar /var/task/
+COPY --from=opencv_builder /usr/local/share/java/opencv4/*.so /var/task/lib/
 
-# Environment for faster startup
-ENV JAVA_OPTS="-Djava.library.path=/app/lib -XX:TieredStopAtLevel=1"
+# Copy application layers - Exploded JAR for faster startup
+COPY --from=jar_build /app/dependencies/ ./
+COPY --from=jar_build /app/spring-boot-loader/ ./
+COPY --from=jar_build /app/snapshot-dependencies/ ./
+COPY --from=jar_build /app/application/ ./
 
-# Standard Java entrypoint
-ENTRYPOINT ["java", "-XX:TieredStopAtLevel=1", "-jar", "app.jar"]
+# Set AWS-specific environment variables for better startup
+ENV JAVA_OPTS="-Djava.library.path=/var/task/lib -XX:TieredStopAtLevel=1"
+
+# Use JarLauncher for exploded JAR
+ENTRYPOINT ["/usr/bin/java", "-Djava.library.path=/var/task/lib", "-XX:TieredStopAtLevel=1", "org.springframework.boot.loader.launch.JarLauncher"]
