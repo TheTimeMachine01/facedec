@@ -1,5 +1,4 @@
-# We define the ARG here so it's global for all stages
-ARG BASE_IMAGE=ghcr.io/thetimemachine01/opencv-base-image:latest
+# Base image definition moved to FROM instruction
 
 # Build the application JAR
 FROM maven:3.9.6-eclipse-temurin-21 AS jar_build
@@ -12,7 +11,7 @@ RUN java -Djarmode=layertools -jar target/*.jar extract
 
 # Final Application Image
 # We start from our custom base image which ALREADY contains OpenCV
-FROM ${BASE_IMAGE}
+FROM ghcr.io/thetimemachine01/opencv-base-image:latest
 
 WORKDIR /var/task
 
@@ -33,4 +32,4 @@ ENV JAVA_OPTS="-Djava.library.path=/var/task/lib -XX:TieredStopAtLevel=1"
 ENV LC_ALL=C
 
 # Use JarLauncher for exploded JAR
-ENTRYPOINT ["/usr/bin/java", "-Djava.library.path=/var/task/lib", "-XX:TieredStopAtLevel=1", "org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["java", "-Djava.library.path=/var/task/lib", "-XX:TieredStopAtLevel=1", "org.springframework.boot.loader.launch.JarLauncher"]
