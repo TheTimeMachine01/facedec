@@ -1,3 +1,6 @@
+# We define the ARG here so it's global for all stages
+ARG BASE_IMAGE=ghcr.io/thetimemachine01/opencv-base-image:latest
+
 # Build the application JAR
 FROM maven:3.9.6-eclipse-temurin-21 AS jar_build
 WORKDIR /app
@@ -9,7 +12,6 @@ RUN java -Djarmode=layertools -jar target/*.jar extract
 
 # Final Application Image
 # We start from our custom base image which ALREADY contains OpenCV
-ARG BASE_IMAGE=ghcr.io/thetimemachine01/opencv-base-image:latest
 FROM ${BASE_IMAGE}
 
 WORKDIR /var/task
