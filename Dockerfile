@@ -21,13 +21,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Download, extract, and copy OpenCV Java bindings
 WORKDIR /opt/opencv_build
 
-RUN git clone https://github.com/opencv/opencv.git -b ${OPENCV_VERSION} --depth 1
+RUN git clone https://github.com/opencv/opencv.git -b ${OPENCV_VERSION} --depth 1 \
+    && git clone https://github.com/opencv/opencv_contrib.git -b ${OPENCV_VERSION} --depth 1
 
 WORKDIR /opt/opencv_build/opencv/build
 
-RUN cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
-    -D BUILD_JAVA=ON -D BUILD_FAT_JAVA_LIB=OFF -D BUILD_SHARED_LIBS=OFF \
-    -D BUILD_EXAMPLES=OFF -D BUILD_TESTS=OFF -D BUILD_PERF_TESTS=OFF ../ \
+RUN cmake \
+   -D CMAKE_BUILD_TYPE=RELEASE \
+   -D CMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
+   -D BUILD_JAVA=ON \
+   -D BUILD_FAT_JAVA_LIB=OFF \
+   -D BUILD_SHARED_LIBS=OFF \
+   -D OPENCV_EXTRA_MODULES_PATH=/opt/opencv_build/opencv_contrib/modules \
+   -D BUILD_EXAMPLES=OFF \
+   -D BUILD_TESTS=OFF \
+   -D BUILD_PERF_TESTS=OFF \
+   -D BUILD_opencv_python2=OFF \
+   -D BUILD_opencv_python3=OFF \
+   -D WITH_GTK_2_X=OFF \
+   -D WITH_FFMPEG=ON \
+   -D WITH_V4L=ON ../ \
     && make -j$(nproc) && make install
 
 # AWS Lambda Runtime
