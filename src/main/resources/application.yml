@@ -32,7 +32,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate # Options: validate | update | create | create-drop
+      ddl-auto: update # Reverted to update to ensure tables are created on fresh DBs
     database-platform: org.hibernate.dialect.MySQLDialect
     show-sql: true # Enable to view SQL queries in the logs
     open-in-view: false # Disable to avoid warning and potential performance issues
