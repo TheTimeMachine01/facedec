@@ -1,6 +1,6 @@
 # Server Configuration
 server:
-  port: 8080  # Change the port if needed
+  port: 8080 # Change the port if needed
   address: 0.0.0.0
 
 # Spring Datasource Configuration
@@ -15,27 +15,28 @@ spring:
       max-request-size: 10MB
 
   datasource:
-#    =======>> Avien Server Credentials <<=======
-#    url:  jdbc:mysql://avien-mysql-ashish-6abe.l.aivencloud.com:26622/facedec?useSSL=true&requireSSL=true&sslMode=VERIFY_IDENTITY&trustCertificateKeyStoreUrl=classpath:truststore.jks&trustCertificateKeyStorePassword=${CERT_PASS}
-#    username: ${DB_USER}                                  # Replace with your database username
-#    password: ${DB_PASS}                              # Replace with your database password
-#    =======>> Local Docker Credentials <<=======
-#    url: jdbc:mysql://localhost:3306/attendance_db?connectionAttributes=transactionIsolation=REPEATABLE-READ  # Replace with your database URL
-#    username: user
-#    password: password
-#    =======>> Github Actions Credentials <<=======
+    #    =======>> Avien Server Credentials <<=======
+    #    url:  jdbc:mysql://avien-mysql-ashish-6abe.l.aivencloud.com:26622/facedec?useSSL=true&requireSSL=true&sslMode=VERIFY_IDENTITY&trustCertificateKeyStoreUrl=classpath:truststore.jks&trustCertificateKeyStorePassword=${CERT_PASS}
+    #    username: ${DB_USER}                                  # Replace with your database username
+    #    password: ${DB_PASS}                              # Replace with your database password
+    #    =======>> Local Docker Credentials <<=======
+    #    url: jdbc:mysql://localhost:3306/attendance_db?connectionAttributes=transactionIsolation=REPEATABLE-READ  # Replace with your database URL
+    #    username: user
+    #    password: password
+    #    =======>> Github Actions Credentials <<=======
+    driver-class-name: com.mysql.cj.jdbc.Driver # MySQL driver
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver     # MySQL driver
 
   jpa:
     hibernate:
-      ddl-auto: update                              # Options: validate | update | create | create-drop
-    show-sql: true                                  # Enable to view SQL queries in the logs
+      ddl-auto: update # Options: validate | update | create | create-drop
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true # Enable to view SQL queries in the logs
     properties:
       hibernate:
-        format_sql: true                            # Format SQL queries for readability
+        format_sql: true # Format SQL queries for readability
   config:
     import: optional:file:.env[.properties]
 
