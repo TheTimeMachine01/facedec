@@ -32,8 +32,8 @@ COPY --from=jar_build /app/application/ ./
 # Note: java.library.path is already correct in the base image, but we set it again to be sure
 # Also TieredStopAtLevel=1 is good for Lambda startup speed
 ENV PORT=8080
-ENV JAVA_OPTS="-Djava.library.path=/var/task/lib -XX:TieredStopAtLevel=1"
+ENV JAVA_OPTS="-Djava.library.path=/var/task/lib -XX:TieredStopAtLevel=1 -Xmx2500m"
 ENV LC_ALL=C
 
 # Use JarLauncher for exploded JAR
-ENTRYPOINT ["java", "-Djava.library.path=/var/task/lib", "--enable-preview", "-XX:TieredStopAtLevel=1", "org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["java", "-Djava.library.path=/var/task/lib", "--enable-preview", "-XX:TieredStopAtLevel=1", "-Xmx2500m", "org.springframework.boot.loader.launch.JarLauncher"]
