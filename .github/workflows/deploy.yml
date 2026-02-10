@@ -1,0 +1,128 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: facedec-backend
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: "maven"
+
+      - name: Run Unit Tests
+        run: mvn test
+
+  build-and-verify:
+    name: Build, Verify, and Push
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v4
+
+      - name: Build Docker Image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Verify Application Startup (< 10s)
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          echo "Starting container..."
+          docker run -d -p 8080:8080 --name app-verify \
+            -e SPRING_PROFILES_ACTIVE=test \
+            $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+          echo "Waiting for health check..."
+          start_time=$(date +%s)
+          end_time=$((start_time + 10))
+
+          while [ $(date +%s) -lt $end_time ]; do
+            if curl -s http://localhost:8080/actuator/health | grep "UP"; then
+              echo "✅ Application started successfully within 10 seconds."
+              docker stop app-verify
+              docker rm app-verify
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "❌ Application failed to start within 10 seconds."
+          docker logs app-verify
+          docker stop app-verify
+          docker rm app-verify
+          exit 1
+
+      - name: Push Docker Image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+  deploy:
+    name: Deploy with Terraform
+    needs: build-and-verify
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        env:
+          TF_VAR_image_tag: ${{ env.IMAGE_TAG }}
+          TF_VAR_spring_datasource_url: ${{ secrets.SPRING_DATASOURCE_URL }}
+          TF_VAR_spring_datasource_username: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          TF_VAR_spring_datasource_password: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+          TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+          TF_VAR_cert_pass: ${{ secrets.CERT_PASS }}
+        run: terraform apply -auto-approve

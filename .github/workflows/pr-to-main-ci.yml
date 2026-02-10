@@ -50,7 +50,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./Dobberfile
           load: true
           push: false
           tags: ${{ secrets.DOCKER_IMAGE_NAME }}:test-build
