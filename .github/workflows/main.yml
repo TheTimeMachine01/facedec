@@ -210,8 +210,8 @@ jobs:
           ECR_REPOSITORY: facedec-backend
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker tag ${{ secrets.DOCKER_IMAGE_NAME }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker tag ${{ secrets.DOCKER_IMAGE_NAME }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker tag ${{ secrets.DOCKER_IMAGE_NAME }}:test-build $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag ${{ secrets.DOCKER_IMAGE_NAME }}:test-build $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
