@@ -33,6 +33,8 @@ resource "aws_lambda_function" "backend" {
   image_uri     = "${aws_ecr_repository.app_repo.repository_url}:${var.image_tag}"
   publish       = false
 
+  description = "Last deployed at ${timestamp()}"
+
   memory_size = 3000 # High RAM for OpenCV processing
   timeout     = 90
 

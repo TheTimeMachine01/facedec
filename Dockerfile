@@ -13,6 +13,9 @@ RUN java -Djarmode=layertools -jar target/*.jar extract
 # We start from our custom base image which ALREADY contains OpenCV
 FROM ghcr.io/thetimemachine01/opencv-base-image:latest
 
+# This copies the Lambda Web Adapter binary into your image
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt/extensions/lambda-adapter
+
 WORKDIR /var/task
 
 # OpenCV artifacts are ALREADY in the base image at:
@@ -28,6 +31,7 @@ COPY --from=jar_build /app/application/ ./
 # Set AWS-specific environment variables for better startup
 # Note: java.library.path is already correct in the base image, but we set it again to be sure
 # Also TieredStopAtLevel=1 is good for Lambda startup speed
+ENV PORT=8080
 ENV JAVA_OPTS="-Djava.library.path=/var/task/lib -XX:TieredStopAtLevel=1"
 ENV LC_ALL=C
 
