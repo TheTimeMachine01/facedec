@@ -32,4 +32,4 @@ ENV JAVA_OPTS="-Djava.library.path=/var/task/lib -XX:TieredStopAtLevel=1"
 ENV LC_ALL=C
 
 # Use JarLauncher for exploded JAR
-ENTRYPOINT ["java", "-Djava.library.path=/var/task/lib", "-XX:TieredStopAtLevel=1", "org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["java", "-Djava.library.path=/var/task/lib", "--enable-preview", "-XX:TieredStopAtLevel=1", "org.springframework.boot.loader.launch.JarLauncher"]
