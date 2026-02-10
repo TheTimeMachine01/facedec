@@ -23,8 +23,6 @@ public class HealthController {
 
     @GetMapping("/lib")
     public String Libcheck() {
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-
         try {
             // Attempt a very simple OpenCV operation to verify the native library is loaded and working.
             // When BUILD_FAT_JAVA_LIB=ON, the native library (libopencv_javaXXX.so)

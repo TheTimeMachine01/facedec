@@ -4,19 +4,28 @@ import jakarta.annotation.PostConstruct;
 import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Component
+@Lazy(false) // Force eager initialization even when spring.main.lazy-initialization=true
 public class OpenCVConfig {
     private static final Logger logger = LoggerFactory.getLogger(OpenCVConfig.class);
 
     @PostConstruct
     public void init() {
+        String libraryPath = System.getProperty("java.library.path");
+        logger.info("java.library.path = {}", libraryPath);
+        logger.info("Attempting to load OpenCV native library: {}", Core.NATIVE_LIBRARY_NAME);
+
         try {
             System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
             logger.info("OpenCV native library loaded successfully: {}", Core.NATIVE_LIBRARY_NAME);
         } catch (UnsatisfiedLinkError e) {
-            logger.error("Failed to load OpenCV library: {}", e.getMessage());
+            logger.error("FATAL: Failed to load OpenCV native library '{}'. java.library.path='{}'",
+                    Core.NATIVE_LIBRARY_NAME, libraryPath, e);
+            // Fail loudly — the app cannot function without OpenCV
+            throw new RuntimeException("Cannot start application: OpenCV native library not found", e);
         }
     }
 }
