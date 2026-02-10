@@ -8,6 +8,7 @@ spring:
   main:
     allow-circular-references: true
     allow-bean-definition-overriding: true
+    lazy-initialization: true # Optimize startup by creating beans only when needed
 
   servlet:
     multipart:
@@ -31,9 +32,10 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update # Options: validate | update | create | create-drop
+      ddl-auto: validate # Options: validate | update | create | create-drop
     database-platform: org.hibernate.dialect.MySQLDialect
     show-sql: true # Enable to view SQL queries in the logs
+    open-in-view: false # Disable to avoid warning and potential performance issues
     properties:
       hibernate:
         format_sql: true # Format SQL queries for readability
