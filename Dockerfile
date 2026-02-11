@@ -8,8 +8,25 @@ FROM ghcr.io/thetimemachine01/opencv-base-image:latest AS opencv_source
 # correct shared library from Ubuntu to satisfy the dynamic linker.
 # -----------------------------------------------------------------------------
 FROM ubuntu:22.04 AS lib_harvester
-RUN apt-get update && apt-get install -y libjpeg-turbo8
-# Locate libjpeg.so.8 (usually in /usr/lib/x86_64-linux-gnu/)
+# Install all potential dependencies required by the OpenCV build
+RUN apt-get update && apt-get install -y \
+    libjpeg-turbo8 \
+    libdc1394-25 \
+    libgstreamer1.0-0 \
+    libgstreamer-plugins-base1.0-0 \
+    libavcodec58 \
+    libavformat58 \
+    libswscale5 \
+    libgtk-3-0 \
+    libgfortran5 \
+    libpng16-16 \
+    libtiff5 \
+    libxvidcore4 \
+    libtbb2 \
+    libatlas3-base \
+    libgphoto2-6 \
+    libgd3 \
+    && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
 # Stage: Jar Build
@@ -42,9 +59,23 @@ COPY --from=opencv_source /var/task/opencv-490.jar /var/task/
 RUN mkdir -p /var/task/lib
 COPY --from=opencv_source /var/task/lib/libopencv_java490.so /var/task/lib/
 
-# 2. Copy harvested libraries (libjpeg.so.8)
-# We copy explicitly from the ubuntu harvester
+# 2. Copy harvested libraries from Ubuntu
+# We need to copy the specific shared objects that are missing or incompatible in Amazon Linux
 COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libjpeg.so.8* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libdc1394.so.25* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libgstreamer-1.0.so.0* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libgst*.so* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libavcodec.so.58* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libavformat.so.58* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libswscale.so.5* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libgfortran.so.5* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libgtk-3.so.0* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libgdk-3.so.0* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libxvidcore.so.4* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libtbb.so.2* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libatlas.so.3* /var/task/lib/
+# Also copy common glib/pango dependencies if they are deeply linked (experimental)
+# but relying on microdnf's mesa-libGL might cover some.
 
 # 3. Copy application layers
 COPY --from=jar_build /app/dependencies/ ./
