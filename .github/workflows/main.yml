@@ -115,7 +115,7 @@ jobs:
 
           # --- Part 1: Wait for log message with explicit loop and timeout ---
           START_TIME=$(date +%s) # Get current timestamp in seconds
-          TIMEOUT=120           # Timeout in seconds
+          TIMEOUT=30           # Timeout in seconds
           LOG_MESSAGE_FOUND=false
 
           while true; do
