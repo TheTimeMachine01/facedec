@@ -26,7 +26,9 @@ RUN apt-get update && apt-get install -y \
     libatlas3-base \
     libgphoto2-6 \
     libgd3 \
+    libraw1394-11 \
     && rm -rf /var/lib/apt/lists/*
+
 
 # -----------------------------------------------------------------------------
 # Stage: Jar Build
@@ -63,6 +65,7 @@ COPY --from=opencv_source /var/task/lib/libopencv_java490.so /var/task/lib/
 # We need to copy the specific shared objects that are missing or incompatible in Amazon Linux
 COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libjpeg.so.8* /var/task/lib/
 COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libdc1394.so.25* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libraw1394.so.11* /var/task/lib/
 COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libgstreamer-1.0.so.0* /var/task/lib/
 COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libgst*.so* /var/task/lib/
 COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libavcodec.so.58* /var/task/lib/
