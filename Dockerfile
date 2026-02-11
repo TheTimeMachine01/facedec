@@ -1,39 +1,41 @@
-# Base image definition moved to FROM instruction
+# Define the source of OpenCV artifacts explicitly
+FROM ghcr.io/thetimemachine01/opencv-base-image:latest AS opencv_source
 
 # Build the application JAR
 FROM maven:3.9.6-eclipse-temurin-21 AS jar_build
 WORKDIR /app
 COPY . .
 RUN mvn clean package -DskipTests
-
 # Extract layers
 RUN java -Djarmode=layertools -jar target/*.jar extract
 
 # Final Application Image
-# We start from our custom base image which ALREADY contains OpenCV
-FROM ghcr.io/thetimemachine01/opencv-base-image:latest
+# We use the raw Lambda Java 21 image and explicitly copy what we need
+FROM public.ecr.aws/lambda/java:21
 
-# This copies the Lambda Web Adapter binary into your image
+# Copy Lambda Web Adapter
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt/extensions/lambda-adapter
 
 WORKDIR /var/task
 
-# OpenCV artifacts are ALREADY in the base image at:
-# /var/task/*.jar and /var/task/lib/*.so
-# We do not need to copy them again.
+# 1. Copy OpenCV artifacts from our custom base image
+# We explicitly copy them to ensure they are present and correct
+COPY --from=opencv_source /var/task/opencv-490.jar /var/task/
+# Create lib dir just in case
+RUN mkdir -p /var/task/lib
+COPY --from=opencv_source /var/task/lib/libopencv_java490.so /var/task/lib/
 
-# Copy application layers - Exploded JAR for faster startup
+# 2. Copy application layers
 COPY --from=jar_build /app/dependencies/ ./
 COPY --from=jar_build /app/spring-boot-loader/ ./
 COPY --from=jar_build /app/snapshot-dependencies/ ./
 COPY --from=jar_build /app/application/ ./
 
-# Set AWS-specific environment variables for better startup
-# Note: java.library.path is already correct in the base image, but we set it again to be sure
-# Also TieredStopAtLevel=1 is good for Lambda startup speed
+# 3. Environment Configuration
 ENV PORT=8080
+# Ensure java.library.path points to where we put the .so file
 ENV JAVA_OPTS="-Djava.library.path=/var/task/lib -XX:TieredStopAtLevel=1 -Xmx2500m"
 ENV LC_ALL=C
 
-# Use JarLauncher for exploded JAR
+# Use JarLauncher
 ENTRYPOINT ["java", "-Djava.library.path=/var/task/lib", "--enable-preview", "-XX:TieredStopAtLevel=1", "-Xmx2500m", "org.springframework.boot.loader.launch.JarLauncher"]
