@@ -34,7 +34,7 @@ public class FaceDetectionController {
     private GlobalExceptionHandler geh;
 
     @PostMapping("/detect")
-    public ResponseEntity<?> detectFaces(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> detectFaces(@RequestParam("file") MultipartFile file) {
 
         Employee currentUser = securityUtils.getAuthenticatedUser();
         Long userId = currentUser.getId();
@@ -47,10 +47,16 @@ public class FaceDetectionController {
 
         try {
             List<Rect> faces = faceDetectionService.detectFaces(file, userId);
-            return ResponseEntity.ok(faces);
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", true);
+            response.put("faces", faces);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing image.");
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", false);
+            errorResponse.put("message", "Error processing image.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
