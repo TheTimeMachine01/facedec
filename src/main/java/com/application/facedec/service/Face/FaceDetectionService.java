@@ -6,6 +6,7 @@ import com.application.facedec.entity.Face.Face;
 import com.application.facedec.repository.Face.FaceDetectionRepository;
 import com.application.facedec.repository.User.UserRepository;
 import org.opencv.core.*;
+import org.opencv.core.MatOfByte;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
@@ -97,7 +98,8 @@ public class FaceDetectionService {
             Face face = faceDetectionRepository.findById(userId).orElse(new Face());
             face.setUser(employee);
             face.setEmp_id(userId);
-            face.setFaceImageUrl(tempFilePath); // Store the temporary file path
+            face.setFaceImageData(file.getBytes()); // Store image bytes in DB
+            face.setFaceImageUrl(tempFilePath); // Keep file path for debugging/logging, though it's ephemeral
             face.setCreatedAt(LocalDateTime.now());
 
             faceDetectionRepository.save(face);
@@ -115,10 +117,17 @@ public class FaceDetectionService {
     }
 
 
-    public double compareFaces(String faceImagePath1, String faceImagePath2) {
+    public double compareFaces(String faceImagePath1, byte[] faceImageBytes2) {
         // Load images
         Mat image1 = Imgcodecs.imread(faceImagePath1, Imgcodecs.IMREAD_GRAYSCALE);
-        Mat image2 = Imgcodecs.imread(faceImagePath2, Imgcodecs.IMREAD_GRAYSCALE);
+
+        // Decode the stored image bytes directly into a Mat
+        MatOfByte matOfByte = new MatOfByte(faceImageBytes2);
+        Mat image2 = Imgcodecs.imdecode(matOfByte, Imgcodecs.IMREAD_GRAYSCALE);
+
+        if (image1.empty() || image2.empty()) {
+            throw new RuntimeException("Could not decode one of the images for comparison.");
+        }
 
         // Resize images to the same size
         Imgproc.resize(image1, image1, new Size(160, 160));
@@ -149,8 +158,16 @@ public class FaceDetectionService {
             return inLogResponse;
         }
 
-        String storedFacePath = storedFace.getFaceImageUrl();
-        double similarity = compareFaces(detectedFacePath, storedFacePath);
+        byte[] storedFaceBytes = storedFace.getFaceImageData();
+
+        if (storedFaceBytes == null || storedFaceBytes.length == 0) {
+            System.err.println("No stored face data found for userId: " + userId);
+            inLogResponse.setFcsScore(0);
+            inLogResponse.setStatus(false);
+            return inLogResponse;
+        }
+
+        double similarity = compareFaces(detectedFacePath, storedFaceBytes);
 
         System.out.println("Face comparison similarity score for userId " + userId + ": " + similarity);
 

@@ -20,7 +20,9 @@ public class Face {
 
     private Long emp_id;
 
-//    private float[] faceEmbedding;
+    @Lob
+    @Column(columnDefinition="LONGBLOB")
+    private byte[] faceImageData;
 
     @Version
     private Long version;
