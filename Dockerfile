@@ -18,6 +18,12 @@ COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt
 
 WORKDIR /var/task
 
+# Runtime optimization: Install only shared libraries (no -dev versions)
+# These are required by OpenCV
+RUN microdnf update -y && microdnf install -y \
+    libjpeg-turbo libpng libtiff mesa-libGL tbb \
+    && microdnf clean all
+
 # 1. Copy OpenCV artifacts from our custom base image
 # We explicitly copy them to ensure they are present and correct
 COPY --from=opencv_source /var/task/opencv-490.jar /var/task/
