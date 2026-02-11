@@ -34,7 +34,7 @@ public class FaceDetectionController {
     private GlobalExceptionHandler geh;
 
     @PostMapping("/detect")
-    public ResponseEntity<Map<String, Object>> detectFaces(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> detectFaces(@RequestParam("file") MultipartFile file) {
 
         Employee currentUser = securityUtils.getAuthenticatedUser();
         Long userId = currentUser.getId();
