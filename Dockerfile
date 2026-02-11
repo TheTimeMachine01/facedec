@@ -28,7 +28,9 @@ RUN apt-get update && apt-get install -y \
     libgd3 \
     libraw1394-11 \
     libusb-1.0-0 \
+    libudev1 \
     && rm -rf /var/lib/apt/lists/*
+
 
 
 
@@ -69,6 +71,7 @@ COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libjpeg.so.8* /var/task/lib/
 COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libdc1394.so.25* /var/task/lib/
 COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libraw1394.so.11* /var/task/lib/
 COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libusb-1.0.so.0* /var/task/lib/
+COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libudev.so.1* /var/task/lib/
 COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libgphoto2* /var/task/lib/
 COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libgd.so.3* /var/task/lib/
 COPY --from=lib_harvester /usr/lib/x86_64-linux-gnu/libgstreamer-1.0.so.0* /var/task/lib/
